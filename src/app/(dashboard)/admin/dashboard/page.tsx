@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Users, Clock, Building2 } from "lucide-react";
-import { PageHeader } from "@/components/layout/page-header";
+import { PageHeader, PageStatusMessage } from "@/components/layout/page-header";
 import { PageSection, SplitGrid, StatGrid } from "@/components/layout/device-layout";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,11 +49,21 @@ export default function AdminDashboardPage() {
   }, []);
 
   if (error) {
-    return <div className="text-destructive">{error}</div>;
+    return (
+      <PageSection>
+        <PageHeader title="Admin Dashboard" description="Unternehmensübersicht und Kennzahlen" />
+        <PageStatusMessage variant="error">{error}</PageStatusMessage>
+      </PageSection>
+    );
   }
 
   if (!data) {
-    return <div className="text-muted-foreground">Dashboard wird geladen...</div>;
+    return (
+      <PageSection>
+        <PageHeader title="Admin Dashboard" description="Unternehmensübersicht und Kennzahlen" />
+        <PageStatusMessage>Dashboard wird geladen...</PageStatusMessage>
+      </PageSection>
+    );
   }
 
   return (

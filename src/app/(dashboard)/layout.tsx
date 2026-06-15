@@ -34,18 +34,16 @@ export default async function DashboardLayout({
           className={[
             "safe-x mx-auto w-full",
             "max-w-[var(--content-max-width,80rem)]",
-            "px-[var(--page-padding-x,1rem)]",
+            "pl-[calc(var(--page-padding-x)+var(--content-inset-start,0px))]",
+            "pr-[var(--page-padding-x)]",
             "pb-[var(--page-padding-y,2rem)]",
-            /* Mobile */
-            "pt-[calc(3.5rem+0.75rem)]",
-            /* Tablet */
-            "md:pt-7",
-            /* Small laptop */
-            "lg:pt-8",
-            /* Laptop (MacBook) */
-            "xl:pt-7",
-            /* Large desktop */
-            "2xl:pt-10",
+            /* Mobile: room below fixed top bar */
+            "pt-[calc(3.5rem+0.5rem)]",
+            /* Tablet+ */
+            "md:pt-5",
+            "lg:pt-6",
+            "xl:pt-5",
+            "2xl:pt-8",
           ].join(" ")}
         >
           {children}

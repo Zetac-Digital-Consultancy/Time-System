@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Calendar, Clock, Sun } from "lucide-react";
-import { PageHeader } from "@/components/layout/page-header";
+import { PageHeader, PageStatusMessage } from "@/components/layout/page-header";
 import { PageSection, StatGrid } from "@/components/layout/device-layout";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,11 +47,21 @@ export default function EmployeeDashboardPage() {
   }, []);
 
   if (error) {
-    return <div className="text-destructive">{error}</div>;
+    return (
+      <PageSection className="pb-20 md:pb-0">
+        <PageHeader title="Mein Dashboard" description="Übersicht Ihrer Arbeitszeiten" />
+        <PageStatusMessage variant="error">{error}</PageStatusMessage>
+      </PageSection>
+    );
   }
 
   if (!data) {
-    return <div className="text-muted-foreground">Dashboard wird geladen...</div>;
+    return (
+      <PageSection className="pb-20 md:pb-0">
+        <PageHeader title="Mein Dashboard" description="Übersicht Ihrer Arbeitszeiten" />
+        <PageStatusMessage>Dashboard wird geladen...</PageStatusMessage>
+      </PageSection>
+    );
   }
 
   return (

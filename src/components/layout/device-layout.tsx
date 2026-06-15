@@ -12,11 +12,12 @@ export function PageSection({
   return (
     <div
       className={cn(
-        "space-y-4",
-        "md:space-y-5",
-        "lg:space-y-6",
-        "xl:space-y-5",
-        "2xl:space-y-8",
+        /* Tighter gap directly under PageHeader band, then normal section rhythm */
+        "flex flex-col gap-5",
+        "md:gap-5",
+        "lg:gap-6",
+        "xl:gap-5",
+        "2xl:gap-8",
         className
       )}
     >
