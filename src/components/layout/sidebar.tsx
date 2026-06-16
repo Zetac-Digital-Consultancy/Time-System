@@ -16,6 +16,7 @@ import {
   Menu,
   ScrollText,
   Users,
+  Timer,
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -32,6 +33,7 @@ const iconMap = {
   FileText,
   ScrollText,
   Bell,
+  Timer,
 };
 
 interface NavItem {

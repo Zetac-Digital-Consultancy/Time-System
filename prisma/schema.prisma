@@ -23,6 +23,24 @@ enum TimeEntryStatus {
   REJECTED
 }
 
+enum TimeEntrySource {
+  MANUAL
+  TIMER
+}
+
+enum TimerStatus {
+  RUNNING
+  PAUSED
+  STOPPED
+}
+
+enum TimerEventType {
+  START
+  PAUSE
+  RESUME
+  STOP
+}
+
 model User {
   id        String     @id @default(cuid())
   name      String
@@ -33,6 +51,7 @@ model User {
   createdAt DateTime   @default(now()) @map("created_at")
 
   timeEntries   TimeEntry[]
+  workTimers    WorkTimer[]
   notifications Notification[]
   auditLogs     AuditLog[] @relation("AdminAuditLogs")
 
@@ -62,16 +81,69 @@ model TimeEntry {
   baustelleId   String?         @map("baustelle_id")
   notes         String?
   status        TimeEntryStatus @default(PENDING)
+  source        TimeEntrySource @default(MANUAL)
   createdAt     DateTime        @default(now()) @map("created_at")
 
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  baustelle Baustelle? @relation(fields: [baustelleId], references: [id], onDelete: SetNull)
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  baustelle  Baustelle?  @relation(fields: [baustelleId], references: [id], onDelete: SetNull)
+  workTimer  WorkTimer?
 
   @@index([userId])
   @@index([workDate])
   @@index([status])
   @@index([baustelleId])
+  @@index([source])
   @@map("time_entries")
+}
+
+model WorkTimer {
+  id            String      @id @default(cuid())
+  userId        String      @map("user_id")
+  workDate      DateTime    @map("work_date") @db.Date
+  sessionNumber Int         @default(1) @map("session_number")
+  status        TimerStatus @default(RUNNING)
+  timeEntryId   String?     @unique @map("time_entry_id")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  timeEntry TimeEntry?      @relation(fields: [timeEntryId], references: [id], onDelete: SetNull)
+  segments  TimerSegment[]
+  events    TimerEvent[]
+
+  @@index([userId, workDate])
+  @@index([userId])
+  @@index([workDate])
+  @@index([status])
+  @@map("work_timers")
+}
+
+model TimerSegment {
+  id              String   @id @default(cuid())
+  workTimerId     String   @map("work_timer_id")
+  segmentOrder    Int      @map("segment_order")
+  startTime       String   @map("start_time")
+  endTime         String?  @map("end_time")
+  durationMinutes Int?     @map("duration_minutes")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  workTimer WorkTimer @relation(fields: [workTimerId], references: [id], onDelete: Cascade)
+
+  @@index([workTimerId])
+  @@map("timer_segments")
+}
+
+model TimerEvent {
+  id          String         @id @default(cuid())
+  workTimerId String         @map("work_timer_id")
+  eventType   TimerEventType @map("event_type")
+  timeOfDay   String         @map("time_of_day")
+  occurredAt  DateTime       @default(now()) @map("occurred_at")
+
+  workTimer WorkTimer @relation(fields: [workTimerId], references: [id], onDelete: Cascade)
+
+  @@index([workTimerId])
+  @@map("timer_events")
 }
 
 model Notification {

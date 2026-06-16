@@ -16,6 +16,12 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     include: {
       user: { select: { id: true, name: true, email: true } },
       baustelle: { select: { id: true, name: true } },
+      workTimer: {
+        include: {
+          segments: { orderBy: { segmentOrder: "asc" } },
+          events: { orderBy: { occurredAt: "asc" } },
+        },
+      },
     },
   });
 
