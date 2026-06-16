@@ -1,0 +1,32 @@
+# Dependencies & build artifacts (rebuilt inside the image)
+node_modules
+.next
+out
+build
+coverage
+
+# Prisma client is regenerated during the build
+src/generated
+
+# VCS / editor
+.git
+.gitignore
+.vscode
+.idea
+
+# Secrets & local env (never bake into the image)
+.env
+.env.*
+!.env.example
+
+# Logs & OS cruft
+*.log
+npm-debug.log*
+.DS_Store
+
+# Docker / docs that don't belong in the build context
+Dockerfile
+.dockerignore
+docker-compose.yml
+*.tsbuildinfo
+next-env.d.ts

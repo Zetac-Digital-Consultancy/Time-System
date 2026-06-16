@@ -29,7 +29,53 @@ Moderne SaaS-Webanwendung für Zeiterfassung und Mitarbeiterverwaltung im Bauwes
 - PDF- und Excel-Export
 - Audit-Protokoll
 
-## Schnellstart
+## Deployment (Docker, Linux-Host)
+
+Die App läuft als Container-Stack (Next.js + PostgreSQL) und ist für jeden
+Linux-Host mit Docker geeignet. Benötigt: Docker Engine + Compose-Plugin.
+
+```bash
+# 1. Umgebungsvariablen anlegen und Secrets setzen
+cp .env.example .env
+nano .env                      # POSTGRES_PASSWORD, AUTH_SECRET, AUTH_URL ...
+
+# AUTH_SECRET erzeugen:
+openssl rand -base64 32
+
+# 2. Erststart MIT Demo-Daten: in .env RUN_SEED=true setzen, dann:
+docker compose up -d --build
+
+# 3. Danach RUN_SEED=false zurücksetzen (Seed löscht sonst alle Daten neu).
+```
+
+Der Stack besteht aus drei Services:
+
+| Service   | Rolle                                                                 |
+|-----------|-----------------------------------------------------------------------|
+| `db`      | PostgreSQL 17 mit persistentem Volume `db-data`                       |
+| `migrate` | Einmal-Job: synchronisiert das Schema (`prisma db push`), optional Seed |
+| `app`     | Next.js (Standalone-Build), läuft als Nicht-Root-User, Port 3000      |
+
+Die App ist anschließend unter `http://<host>:${APP_PORT}` (Standard 3000)
+erreichbar. Für Produktion einen Reverse-Proxy (nginx/Caddy/Traefik) mit
+TLS davorschalten und `AUTH_URL`/`NEXTAUTH_URL` auf die öffentliche Domain
+setzen.
+
+**Hinweise:**
+- Healthcheck-Endpoint: `GET /api/health` (prüft auch die DB-Verbindung).
+- Schema-Änderungen werden bei jedem `up` über den `migrate`-Service
+  idempotent angewandt (`prisma db push`). Die Migrationshistorie ist
+  bewusst nicht maßgeblich.
+- Datenbank-Backup: `docker compose exec db pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" > backup.sql`
+
+```bash
+# Logs ansehen / Stack stoppen
+docker compose logs -f app
+docker compose down            # Container stoppen (Daten bleiben im Volume)
+docker compose down -v         # inkl. Datenbank-Volume löschen
+```
+
+## Lokale Entwicklung
 
 ### 1. Abhängigkeiten installieren
 
