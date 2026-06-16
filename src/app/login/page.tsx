@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { getSession, signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { HardHat, Loader2 } from "lucide-react";
@@ -18,7 +17,6 @@ function getDashboardPath(role: string | undefined) {
 }
 
 export default function LoginPage() {
-  const router = useRouter();
   const [error, setError] = useState("");
   const {
     register,
@@ -44,8 +42,8 @@ export default function LoginPage() {
     const session = await getSession();
     const dashboardPath = getDashboardPath(session?.user?.role);
 
-    router.refresh();
-    router.push(dashboardPath);
+    // Full navigation ensures Safari applies the session cookie before loading protected routes
+    window.location.assign(dashboardPath);
   }
 
   return (
