@@ -28,6 +28,11 @@ function getDashboardPath(role: Role | undefined) {
   return role === "ADMIN" ? "/admin/dashboard" : "/employee/dashboard";
 }
 
+// Secure cookies require HTTPS. Derive from the public URL scheme rather than
+// NODE_ENV, so cookies work when serving over plain HTTP (e.g. via IP, no domain
+// yet) and automatically become Secure once AUTH_URL is an https:// origin.
+const useSecureCookies = (process.env.AUTH_URL ?? process.env.NEXTAUTH_URL ?? "").startsWith("https://");
+
 export const authConfig = {
   secret: process.env.AUTH_SECRET,
   trustHost: true,
@@ -40,7 +45,7 @@ export const authConfig = {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: process.env.NODE_ENV === "production",
+        secure: useSecureCookies,
       },
     },
     csrfToken: {
@@ -48,7 +53,7 @@ export const authConfig = {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: process.env.NODE_ENV === "production",
+        secure: useSecureCookies,
       },
     },
     callbackUrl: {
@@ -56,7 +61,7 @@ export const authConfig = {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: process.env.NODE_ENV === "production",
+        secure: useSecureCookies,
       },
     },
   },
