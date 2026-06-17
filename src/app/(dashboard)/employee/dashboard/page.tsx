@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Calendar, Clock, Sun } from "lucide-react";
 import { PageHeader, PageStatusMessage } from "@/components/layout/page-header";
 import { PageSection, StatGrid } from "@/components/layout/device-layout";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TimeEntryForm } from "@/components/forms/time-entry-form";
+import { WorkTimerCard } from "@/components/work-timer/work-timer-card";
 import { formatDateDE } from "@/lib/utils";
 
 interface DashboardData {
@@ -16,6 +17,7 @@ interface DashboardData {
     startTime: string;
     endTime: string;
     totalHours: number;
+    source?: string;
     baustelle?: { name: string } | null;
   }>;
   todayHours: string;
@@ -26,8 +28,9 @@ interface DashboardData {
 export default function EmployeeDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
+  const loadDashboard = useCallback(() => {
     fetch("/api/dashboard/employee")
       .then(async (response) => {
         if (response.status === 401) {
@@ -45,6 +48,10 @@ export default function EmployeeDashboardPage() {
       })
       .catch((err: Error) => setError(err.message));
   }, []);
+
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard, refreshKey]);
 
   if (error) {
     return (
@@ -68,10 +75,12 @@ export default function EmployeeDashboardPage() {
     <PageSection className="pb-20 md:pb-0">
       <PageHeader
         title="Mein Dashboard"
-        description="Übersicht Ihrer Arbeitszeiten"
-        action={<TimeEntryForm mobileFab onSuccess={() => window.location.reload()} />}
+        description="Timer oder manuelle Zeiterfassung"
+        action={<TimeEntryForm mobileFab onSuccess={() => setRefreshKey((k) => k + 1)} />}
         hideMobileAction
       />
+
+      <WorkTimerCard onStopped={() => setRefreshKey((k) => k + 1)} />
 
       <StatGrid>
         <StatCard title="Stunden heute" value={data.todayHours} icon={Sun} />
@@ -98,6 +107,11 @@ export default function EmployeeDashboardPage() {
                     <span className="ml-2 font-normal tabular-nums text-muted-foreground">
                       {entry.totalHours.toFixed(2)}h
                     </span>
+                    {entry.source === "TIMER" && (
+                      <span className="ml-2 rounded bg-primary/10 px-1.5 py-0.5 text-xs text-primary">
+                        Timer
+                      </span>
+                    )}
                   </p>
                   <p className="mt-0.5 text-xs text-muted-foreground xl:text-[12px] 2xl:text-sm">
                     {formatDateDE(entry.workDate)} ·{" "}

@@ -9,6 +9,11 @@ export const USER_STATUS_LABELS = {
   INACTIVE: "Inaktiv",
 } as const;
 
+export const SOURCE_LABELS = {
+  MANUAL: "Manuell",
+  TIMER: "Timer",
+} as const;
+
 export const ROLE_LABELS = {
   ADMIN: "Administrator",
   EMPLOYEE: "Mitarbeiter",
@@ -18,6 +23,7 @@ export const NAV_ADMIN = [
   { href: "/admin/dashboard", label: "Dashboard", icon: "LayoutDashboard" },
   { href: "/admin/employees", label: "Mitarbeiter", icon: "Users" },
   { href: "/admin/time-entries", label: "Zeiteinträge", icon: "Clock" },
+  { href: "/admin/timer-sessions", label: "Timer", icon: "Timer" },
   { href: "/admin/baustellen", label: "Baustellen", icon: "Building2" },
   { href: "/admin/reports", label: "Berichte", icon: "FileText" },
   { href: "/admin/audit-logs", label: "Audit-Protokoll", icon: "ScrollText" },

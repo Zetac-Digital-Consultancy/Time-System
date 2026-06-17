@@ -50,6 +50,14 @@ export async function GET(request: NextRequest) {
     include: {
       user: { select: { id: true, name: true, email: true } },
       baustelle: { select: { id: true, name: true } },
+      workTimer: {
+        select: {
+          id: true,
+          status: true,
+          segments: { orderBy: { segmentOrder: "asc" } },
+          events: { orderBy: { occurredAt: "asc" } },
+        },
+      },
     },
     orderBy: [{ workDate: "desc" }, { createdAt: "desc" }],
   });
