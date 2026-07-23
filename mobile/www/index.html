@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>ZeitTrack</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        padding: max(24px, env(safe-area-inset-top)) 24px
+          max(24px, env(safe-area-inset-bottom));
+        background: #0b0b0f;
+        color: #e8e8ea;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        text-align: center;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      .logo {
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .logo span {
+        color: #6366f1;
+      }
+      .spinner {
+        width: 34px;
+        height: 34px;
+        border: 3px solid rgba(255, 255, 255, 0.15);
+        border-top-color: #6366f1;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .msg {
+        max-width: 280px;
+        font-size: 15px;
+        line-height: 1.5;
+        color: #a1a1aa;
+      }
+      button {
+        appearance: none;
+        border: none;
+        border-radius: 12px;
+        padding: 12px 24px;
+        font-size: 15px;
+        font-weight: 600;
+        color: #fff;
+        background: #6366f1;
+        cursor: pointer;
+      }
+      button:active {
+        opacity: 0.85;
+      }
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="logo">Zeit<span>Track</span></div>
+
+    <div id="loading">
+      <div class="spinner"></div>
+    </div>
+
+    <div id="offline" class="hidden">
+      <p class="msg">
+        Can't reach the ZeitTrack server. Check your internet connection and try
+        again.
+      </p>
+      <button onclick="location.reload()">Retry</button>
+    </div>
+
+    <script>
+      // This page only appears if the remote server (configured as server.url
+      // in capacitor.config.ts) can't be loaded — i.e. the device is offline.
+      // Swap the spinner for the offline message after a short grace period.
+      setTimeout(function () {
+        document.getElementById("loading").classList.add("hidden");
+        document.getElementById("offline").classList.remove("hidden");
+      }, 2500);
+    </script>
+  </body>
+</html>

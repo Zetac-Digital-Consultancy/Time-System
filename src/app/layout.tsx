@@ -19,6 +19,12 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  // Colors the mobile browser chrome / native status-bar area to match the app
+  // shell (used by the ZeitTrack native wrapper in mobile/).
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0b0f" },
+  ],
 };
 
 export const metadata: Metadata = {

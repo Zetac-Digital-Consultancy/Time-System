@@ -1,0 +1,12 @@
+# Dependencies
+node_modules/
+
+# Generated native projects — regenerated with `cap add android` / `cap add ios`.
+# Keep them OUT of git until you start customising native code (icons, signing,
+# plugins). At that point, remove the two lines below and commit the folders so
+# your icons/splash/signing config are versioned.
+/android/
+/ios/
+
+# Capacitor
+.capacitor/
