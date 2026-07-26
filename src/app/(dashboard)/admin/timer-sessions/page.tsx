@@ -80,7 +80,7 @@ export default function AdminTimerSessionsPage() {
     <PageSection>
       <PageHeader
         title="Timer-Sitzungen"
-        description="Alle Timer-Erfassungen und Arbeitssitzungen der Mitarbeiter"
+        description="Detaillierte Timer-Sitzungen der Mitarbeiter mit Segmenten und Ereignisprotokoll"
       />
 
       <FilterPanel title="Filter">

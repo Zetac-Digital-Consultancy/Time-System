@@ -53,6 +53,29 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   }
 
   const body = await request.json();
+  const bodyKeys = Object.keys(body);
+
+  // Baustelle-only assignment: admin sends { baustelleId } without the full entry fields.
+  if (isAdmin && bodyKeys.length === 1 && "baustelleId" in body) {
+    const entry = await prisma.timeEntry.update({
+      where: { id },
+      data: { baustelleId: body.baustelleId ?? null },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+        baustelle: { select: { id: true, name: true } },
+      },
+    });
+    await logAdminAction(
+      authResult.user.id,
+      "UPDATE",
+      "TimeEntry",
+      id,
+      `Baustelle zugewiesen: ${entry.baustelle?.name ?? "keine"} für ${entry.user.name}`
+    );
+    return NextResponse.json(entry);
+  }
+
+  // Full update (edit form).
   const schema = isAdmin ? adminTimeEntrySchema : employeeTimeEntrySchema;
   const parsed = schema.safeParse(body);
   if (!parsed.success) {

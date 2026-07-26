@@ -11,6 +11,7 @@ import { spawn, execSync } from "child_process";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const lockPath = join(root, ".next/dev/lock");
 const port = process.env.PORT ?? "3000";
+const hostname = process.env.HOSTNAME ?? "localhost";
 
 function readLock() {
   if (!existsSync(lockPath)) return null;
@@ -164,7 +165,7 @@ if (mode === "stop") {
 await stopDevServer();
 await run("npx", ["prisma", "generate"]);
 
-const nextArgs = ["dev", "-p", port];
+const nextArgs = ["dev", "-p", port, "-H", hostname];
 const next = spawn("npx", ["next", ...nextArgs], {
   cwd: root,
   stdio: "inherit",

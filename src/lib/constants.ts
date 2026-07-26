@@ -23,7 +23,7 @@ export const NAV_ADMIN = [
   { href: "/admin/dashboard", label: "Dashboard", icon: "LayoutDashboard" },
   { href: "/admin/employees", label: "Mitarbeiter", icon: "Users" },
   { href: "/admin/time-entries", label: "Zeiteinträge", icon: "Clock" },
-  { href: "/admin/timer-sessions", label: "Timer", icon: "Timer" },
+  { href: "/admin/timer-sessions", label: "Timer-Sitzungen", icon: "Timer" },
   { href: "/admin/baustellen", label: "Baustellen", icon: "Building2" },
   { href: "/admin/reports", label: "Berichte", icon: "FileText" },
   { href: "/admin/audit-logs", label: "Audit-Protokoll", icon: "ScrollText" },

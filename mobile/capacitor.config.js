@@ -25,7 +25,7 @@ const SERVER_URL = process.env.ZEITTRACK_URL || "https://zeittrack.yourcompany.c
 const IS_HTTPS = SERVER_URL.startsWith("https://");
 
 const config = {
-  appId: "com.zeittrack.app",
+  appId: "com.zetac.timetrack",
   appName: "ZeitTrack",
   // Local fallback bundle. Shown only if the server can't be reached (offline).
   webDir: "www",

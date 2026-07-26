@@ -47,12 +47,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="safe-top safe-bottom safe-x flex min-h-dvh items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 p-4 dark:from-slate-950 dark:to-slate-900">
+    <div className="safe-top safe-bottom safe-x flex min-h-dvh items-center justify-center md:p-4 md:bg-gradient-to-br md:from-slate-100 md:to-slate-200 md:dark:from-slate-950 md:dark:to-slate-900">
       <div className="absolute top-4 right-4">
         <ThemeToggle />
       </div>
 
-      <Card className="w-full max-w-md border-0 shadow-xl md:max-w-lg">
+      <Card className="w-full md:max-w-md lg:max-w-lg border-0 shadow-none md:shadow-xl bg-transparent md:bg-card rounded-none md:rounded-xl">
         <CardHeader className="text-center space-y-4">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
             <HardHat className="h-7 w-7" />
