@@ -14,17 +14,9 @@ ARG NODE_VERSION=22
 
 # ---------------------------------------------------------------------------
 # deps: install dependencies and generate the Prisma client.
-<<<<<<< Updated upstream
-#
-# --ignore-scripts skips the postinstall hook (which calls verify-deps.mjs,
-# a file not present in this minimal build context). prisma generate runs
-# explicitly afterwards with a placeholder DATABASE_URL — the real one is
-# injected at runtime via the container environment.
-=======
 # The Prisma schema + config and scripts are copied first because `npm ci`
 # runs the `postinstall` script (`prisma generate && node
 # scripts/verify-deps.mjs`), which needs them.
->>>>>>> Stashed changes
 # ---------------------------------------------------------------------------
 FROM node:${NODE_VERSION}-bookworm-slim AS deps
 WORKDIR /app
@@ -36,34 +28,9 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
 COPY package.json package-lock.json ./
 COPY prisma ./prisma
 COPY prisma.config.ts ./
-<<<<<<< Updated upstream
 RUN npm ci --ignore-scripts && npx prisma generate
-
-# ---------------------------------------------------------------------------
-# dev: development server with hot reload.
-# Source is baked in at build time so the container starts without any
-# bind-mount reads (VirtioFS on macOS Apple Silicon returns EDEADLK on
-# concurrent file reads, crashing Turbopack/webpack at startup).
-# Live reload is provided by Docker Compose Watch (develop.watch in the
-# compose file), which uses Docker's internal transfer API — not VirtioFS.
-# HOSTNAME=0.0.0.0 makes Next.js bind to all interfaces so it is reachable
-# from the host browser via the published port.
-# ---------------------------------------------------------------------------
-FROM deps AS dev
-ENV NODE_ENV=development \
-    NEXT_TELEMETRY_DISABLED=1 \
-    HOSTNAME=0.0.0.0 \
-    PORT=3000
-COPY src ./src
-COPY public ./public
-COPY next.config.ts tsconfig.json postcss.config.mjs ./
-COPY scripts/dev-server.mjs ./scripts/
-EXPOSE 3000
-CMD ["npm", "run", "dev"]
-=======
 COPY scripts ./scripts
 RUN npm ci
->>>>>>> Stashed changes
 
 # ---------------------------------------------------------------------------
 # builder: build the Next.js app (standalone output).
