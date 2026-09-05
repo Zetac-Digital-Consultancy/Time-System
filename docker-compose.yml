@@ -50,13 +50,21 @@ services:
       AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env}
       AUTH_URL: ${AUTH_URL:-http://localhost:3000}
       NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      AUTH_TRUST_HOST: ${AUTH_TRUST_HOST:-true}
+      # Register with the shared nginx-proxy + acme-companion for HTTPS on its subdomain
+      VIRTUAL_HOST: time-system.zetac.de
+      VIRTUAL_PORT: "3000"
+      LETSENCRYPT_HOST: time-system.zetac.de
+      LETSENCRYPT_EMAIL: info@zetac.de
+    networks:
+      - default
+      - proxy
     depends_on:
       db:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
-    ports:
-      - "${APP_PORT:-3000}:3000"
+    # Reachable only via the shared nginx-proxy (time-system.zetac.de); no public host port.
     healthcheck:
       test:
         - CMD
@@ -67,6 +75,13 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
+
+networks:
+  # default: implicit per-stack bridge (app <-> db <-> migrate)
+  default:
+  # shared reverse-proxy network, created/owned by /root/reverse-proxy
+  proxy:
+    external: true
 
 volumes:
   db-data:
