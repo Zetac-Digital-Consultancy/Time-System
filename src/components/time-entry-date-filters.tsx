@@ -21,7 +21,7 @@ interface TimeEntryDateFiltersProps {
 
 function FilterField({ label, htmlFor, children }: { label: string; htmlFor?: string; children: ReactNode }) {
   return (
-    <div className="grid gap-2">
+    <div className="grid min-w-0 grid-cols-1 gap-2 [&_input]:min-w-0 [&_input]:max-w-full">
       <Label htmlFor={htmlFor} className="text-sm font-medium leading-none">
         {label}
       </Label>

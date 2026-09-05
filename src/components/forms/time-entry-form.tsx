@@ -143,8 +143,8 @@ export function TimeEntryForm({
   }
 
   const formContent = (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 xl:space-y-3 2xl:space-y-4">
-      <FormGrid>
+    <form onSubmit={handleSubmit(onSubmit)} className="min-w-0 space-y-4 [&_input]:min-w-0 [&_input]:max-w-full [&_textarea]:min-w-0 [&_textarea]:max-w-full [&_textarea]:resize-y xl:space-y-3 2xl:space-y-4">
+      <FormGrid className="min-w-0 [&>div]:min-w-0">
         <div className="space-y-2">
           <Label htmlFor="workDate">Arbeitsdatum</Label>
           <Input id="workDate" type="date" {...register("workDate")} />
