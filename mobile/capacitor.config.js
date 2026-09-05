@@ -21,7 +21,7 @@
 //    Changing it afterwards means regenerating the native folders.
 // ---------------------------------------------------------------------------
 
-const SERVER_URL = process.env.ZEITTRACK_URL || "https://zeittrack.yourcompany.com";
+const SERVER_URL = process.env.ZEITTRACK_URL || "https://time-system.zetac.de/login";
 const IS_HTTPS = SERVER_URL.startsWith("https://");
 
 const config = {

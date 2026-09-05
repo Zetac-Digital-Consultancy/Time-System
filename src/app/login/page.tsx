@@ -48,7 +48,10 @@ export default function LoginPage() {
 
   return (
     <div className="safe-top safe-bottom safe-x flex min-h-dvh items-center justify-center md:p-4 md:bg-gradient-to-br md:from-slate-100 md:to-slate-200 md:dark:from-slate-950 md:dark:to-slate-900">
-      <div className="absolute top-4 right-4">
+      <div
+        className="absolute right-4"
+        style={{ top: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}
+      >
         <ThemeToggle />
       </div>
 
