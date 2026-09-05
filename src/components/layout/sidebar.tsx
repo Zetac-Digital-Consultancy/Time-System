@@ -116,7 +116,7 @@ export function Sidebar({ navItems, role, userName }: SidebarProps) {
   return (
     <>
       {/* Mobile (< 768px): top bar + slide-in drawer */}
-      <header className="safe-top safe-x fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-3 border-b border-border bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:hidden">
+      <header className="safe-top fixed inset-x-0 top-0 z-40 flex h-[calc(3.5rem+env(safe-area-inset-top,0px))] items-center gap-3 border-b border-border bg-background/95 pl-[calc(1rem+env(safe-area-inset-left,0px))] pr-[calc(1rem+env(safe-area-inset-right,0px))] backdrop-blur supports-[backdrop-filter]:bg-background/80 md:hidden">
         <Button
           variant="outline"
           size="icon"
@@ -139,7 +139,7 @@ export function Sidebar({ navItems, role, userName }: SidebarProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="absolute top-3 right-3 z-10"
+              className="absolute top-[calc(0.75rem+env(safe-area-inset-top,0px))] right-3 z-10"
               aria-label="Menü schließen"
               onClick={closeMobile}
             >

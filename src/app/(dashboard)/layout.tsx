@@ -38,8 +38,8 @@ export default async function DashboardLayout({
             "pl-[calc(var(--page-padding-x)+var(--content-inset-start,0px))]",
             "pr-[var(--page-padding-x)]",
             "pb-[var(--page-padding-y,2rem)]",
-            /* Mobile: room below fixed top bar */
-            "pt-[calc(3.5rem+0.5rem)]",
+            /* Mobile: fixed toolbar, device safe area, then the content gap. */
+            "pt-[calc(3.5rem+env(safe-area-inset-top,0px)+0.5rem)]",
             /* Tablet+ */
             "md:pt-5",
             "lg:pt-6",
