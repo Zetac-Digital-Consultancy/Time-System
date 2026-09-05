@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export function PasswordForm({ activation = false }: { activation?: boolean }) {
+export function PasswordForm({ activation = false, backHref }: { activation?: boolean; backHref?: string }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
@@ -35,8 +35,11 @@ export function PasswordForm({ activation = false }: { activation?: boolean }) {
       <div className="space-y-2"><Label htmlFor="password">Neues Passwort</Label><Input id="password" name="password" type="password" autoComplete="new-password" minLength={15} required /><p className="text-xs text-muted-foreground">Mindestens 15 Zeichen, maximal 72 UTF-8-Bytes.</p></div>
       <div className="space-y-2"><Label htmlFor="confirm">Passwort wiederholen</Label><Input id="confirm" name="confirm" type="password" autoComplete="new-password" required /></div>
       {error && <p role="alert" className="text-destructive">{error}</p>}
-      <Button type="submit" disabled={busy}>Passwort speichern</Button>
-      {!activation && <Button type="button" variant="outline" onClick={() => signOut({ callbackUrl: "/login" })}>Abmelden</Button>}
+      <div className="flex flex-wrap gap-2">
+        <Button type="submit" disabled={busy}>Passwort speichern</Button>
+        {!activation && backHref && !busy && <Button asChild variant="outline"><Link href={backHref}>Zurück zur Übersicht</Link></Button>}
+        {!activation && <Button type="button" variant="outline" disabled={busy} onClick={() => signOut({ callbackUrl: "/login" })}>Abmelden</Button>}
+      </div>
     </form>}
   </CardContent></Card></main>;
 }
