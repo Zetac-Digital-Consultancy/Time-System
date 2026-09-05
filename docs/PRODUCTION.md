@@ -46,6 +46,8 @@ Platform emergency recovery requires server access:
 docker compose run --rm migrate npx tsx scripts/platform-admin.ts --recover
 ```
 
+If setup fails, the updated command reports the failed stage and a sanitized reason. After transferring updated scripts, rebuild with `docker compose build migrate`. A read-only environment/schema check is available through `docker compose run --rm migrate npx tsx scripts/platform-admin.ts --check`. This check does not verify write permissions or an authenticator code. Code verification allows three attempts with the same setup key. Every new setup run generates a new key; use that run's key and a current six-digit TOTP code, with server and phone clocks synchronized. Never share the setup key or unredacted database errors.
+
 Recovery replaces password and MFA enrollment and revokes sessions. Protect server/SSH access with MFA and restrict it to operators. Preserve `AUTH_SECRET` securely: changing it invalidates all sessions **and requires re-enrolling every platform admin's encrypted MFA key**. Use a restricted runtime database user in production; reserve DDL privileges for the migration operator. Configure PostgreSQL grants/default privileges according to your hosting setup.
 
 ## Backups and monitoring

@@ -19,8 +19,8 @@ ZeitTrack web app. It produces real, installable iOS (`.ipa`) and Android
   server, database, login, and all screens stay exactly as they are today.
 - **You still host the server** — that never goes away. The app stores only
   distribute the phone app; they do not run your backend. See "Hosting" below.
-- Because your login is **email + password (cookies)**, not an OAuth redirect,
-  it works cleanly inside the native shell with no extra work.
+- Login uses cookies inside the native web view. Keep the configured server URL
+  at the site root so post-login navigation stays inside the app.
 
 ## What you need
 
@@ -56,7 +56,8 @@ login cookies become `Secure`).
 
 Edit **`capacitor.config.js`**:
 
-1. `SERVER_URL` → your hosted `https://` address.
+1. Set your hosted `https://` address in the config or `ZEITTRACK_URL` when syncing.
+   The config normalizes it to the site root, without `/login`.
 2. `appId` → your own reverse-domain id (e.g. `com.yourcompany.zeittrack`).
    ⚠️ Change this **before** running `cap add` — it's baked into the native
    projects. It's also your permanent app identity in both stores.
@@ -128,6 +129,7 @@ You rarely rebuild the app. Because it loads your live server, **shipping a web
 change = deploying your Next.js server** — the app picks it up instantly. You
 only rebuild and re-submit the native app when you change:
 - the app icon / splash / name,
+- the server URL or other native navigation configuration,
 - native plugins (e.g. adding push notifications),
 - the Capacitor/OS version.
 
@@ -136,6 +138,29 @@ only rebuild and re-submit the native app when you change:
 # after changing native config/icons:
 cd mobile && npx cap sync && npx cap open android   # (or ios)
 ```
+
+## Fixing login opening the browser on iOS
+
+An older config used `https://time-system.zetac.de/login` as `server.url`.
+Capacitor iOS checks the full URL prefix, so navigating to a dashboard can
+open the system browser instead of staying in the app. The current config
+uses the site root and also normalizes `ZEITTRACK_URL` overrides.
+
+On the Mac with your existing signed iOS project, update this config and run:
+
+```bash
+cd mobile
+npm ci
+npx cap sync ios
+npx cap open ios
+```
+
+Check `ios/App/App/capacitor.config.json`: `server.url` should be
+`https://time-system.zetac.de/`. Keep the existing bundle identifier and signing
+team, increment the build number, and archive/upload a new build. Test login,
+dashboard navigation, logout, and reopening the app on an iPhone through
+TestFlight before submitting the update. A Docker/server redeploy alone does
+not update the configuration in an already installed App Store binary.
 
 ## App icon & splash screen
 

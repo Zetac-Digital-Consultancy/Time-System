@@ -21,8 +21,16 @@
 //    Changing it afterwards means regenerating the native folders.
 // ---------------------------------------------------------------------------
 
-const SERVER_URL = process.env.ZEITTRACK_URL || "https://time-system.zetac.de/login";
-const IS_HTTPS = SERVER_URL.startsWith("https://");
+const configuredURL = new URL(process.env.ZEITTRACK_URL || "https://time-system.zetac.de");
+if (!["https:", "http:"].includes(configuredURL.protocol) || configuredURL.username || configuredURL.password) {
+  throw new Error("ZEITTRACK_URL must be an HTTP(S) URL without credentials.");
+}
+// Capacitor iOS uses a URL-prefix check for internal navigation. A /login
+// suffix would send dashboard navigation to the external browser. Normalize
+// overrides too, so an old build environment cannot reintroduce that suffix.
+// The root route already redirects to login or the authenticated dashboard.
+const SERVER_URL = `${configuredURL.origin}/`;
+const IS_HTTPS = configuredURL.protocol === "https:";
 
 const config = {
   appId: "com.zetac.timetrack",
