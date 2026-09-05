@@ -63,16 +63,11 @@ export default function BaustellenPage() {
     fetchBaustellen();
   }, []);
 
-  useEffect(() => {
-    if (editItem) {
-      reset({
-        name: editItem.name,
-        address: editItem.address ?? "",
-        description: editItem.description ?? "",
-      });
-      setOpen(true);
-    }
-  }, [editItem, reset]);
+  function openEdit(item: Baustelle) {
+    setEditItem(item);
+    reset({ name: item.name, address: item.address ?? "", description: item.description ?? "" });
+    setOpen(true);
+  }
 
   async function onSubmit(data: BaustelleInput) {
     const url = editItem ? `/api/baustellen/${editItem.id}` : "/api/baustellen";
@@ -154,7 +149,7 @@ export default function BaustellenPage() {
             <DataListRow label="Einträge" value={b._count.timeEntries} />
             <DataListRow label="Erstellt" value={formatDateDE(b.createdAt)} />
             <DataListActions>
-              <Button size="icon" variant="outline" onClick={() => setEditItem(b)} aria-label="Bearbeiten">
+              <Button size="icon" variant="outline" onClick={() => openEdit(b)} aria-label="Bearbeiten">
                 <Pencil className="h-4 w-4" />
               </Button>
               <Button size="icon" variant="outline" onClick={() => handleDelete(b.id)} aria-label="Löschen">
@@ -185,7 +180,7 @@ export default function BaustellenPage() {
                   <TableCell>{b._count.timeEntries}</TableCell>
                   <TableCell>{formatDateDE(b.createdAt)}</TableCell>
                   <TableCell className="text-right">
-                    <Button size="icon" variant="ghost" onClick={() => setEditItem(b)}>
+                    <Button size="icon" variant="ghost" onClick={() => openEdit(b)}>
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button size="icon" variant="ghost" onClick={() => handleDelete(b.id)}>

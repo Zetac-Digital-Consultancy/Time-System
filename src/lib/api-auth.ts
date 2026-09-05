@@ -3,8 +3,9 @@ import { logAuthEvent } from "@/lib/auth-logger";
 import { createAuditLog } from "./audit";
 import { NextResponse } from "next/server";
 import type { Role } from "@/generated/prisma/client";
+import type { Session } from "next-auth";
 
-export async function requireAuth() {
+export async function requireSession(): Promise<{ error: NextResponse } | { session: Session; user: Session["user"] }> {
   const session = await auth();
 
   if (!session?.user?.id || !session.user.role) {
@@ -15,6 +16,25 @@ export async function requireAuth() {
   }
 
   return { session, user: session.user };
+}
+
+export async function requireAuth() {
+  const result = await requireSession();
+  if ("error" in result) return result;
+  if (result.user.mustChangePassword) return { error: NextResponse.json({ error: "Bitte zuerst das Passwort ändern", code: "PASSWORD_CHANGE_REQUIRED" }, { status: 403 }) };
+  if (!result.user.companyId || result.user.role === "PLATFORM_ADMIN") {
+    return { error: NextResponse.json({ error: "Firmenzugang erforderlich" }, { status: 403 }) };
+  }
+  return { ...result, user: { ...result.user, companyId: result.user.companyId } };
+}
+
+export async function requirePlatformAdmin() {
+  const result = await requireSession();
+  if ("error" in result) return result;
+  if (result.user.role !== "PLATFORM_ADMIN" || result.user.mustChangePassword) {
+    return { error: NextResponse.json({ error: "Zugriff verweigert" }, { status: 403 }) };
+  }
+  return result;
 }
 
 export async function requireRole(roles: Role[]) {

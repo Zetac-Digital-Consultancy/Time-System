@@ -12,7 +12,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
   const { id } = await params;
   const entry = await prisma.timeEntry.findUnique({
-    where: { id },
+    where: { id, user: { companyId: authResult.user.companyId } },
     include: {
       user: { select: { id: true, name: true, email: true } },
       baustelle: { select: { id: true, name: true } },
@@ -41,7 +41,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   if ("error" in authResult) return authResult.error;
 
   const { id } = await params;
-  const existing = await prisma.timeEntry.findUnique({ where: { id } });
+  const existing = await prisma.timeEntry.findUnique({ where: { id, user: { companyId: authResult.user.companyId } } });
 
   if (!existing) {
     return NextResponse.json({ error: "Eintrag nicht gefunden" }, { status: 404 });
@@ -55,10 +55,27 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   const body = await request.json();
   const bodyKeys = Object.keys(body);
 
+  if (!isAdmin && existing.status === "APPROVED") {
+    return NextResponse.json({ error: "Freigegebene Einträge können nicht geändert werden" }, { status: 403 });
+  }
+  if (isAdmin && body.baustelleId != null && (
+    typeof body.baustelleId !== "string" || !(await prisma.baustelle.findFirst({
+      where: { id: body.baustelleId, companyId: authResult.user.companyId }, select: { id: true },
+    }))
+  )) return NextResponse.json({ error: "Baustelle nicht gefunden" }, { status: 404 });
+  if (isAdmin && body.userId != null && (
+    typeof body.userId !== "string" || !(await prisma.user.findFirst({
+      where: { id: body.userId, companyId: authResult.user.companyId, role: "EMPLOYEE" }, select: { id: true },
+    }))
+  )) return NextResponse.json({ error: "Mitarbeiter nicht gefunden" }, { status: 404 });
+  if (body.userId && body.userId !== existing.userId && existing.source === "TIMER") {
+    return NextResponse.json({ error: "Timer-Einträge können nicht übertragen werden" }, { status: 400 });
+  }
+
   // Baustelle-only assignment: admin sends { baustelleId } without the full entry fields.
   if (isAdmin && bodyKeys.length === 1 && "baustelleId" in body) {
     const entry = await prisma.timeEntry.update({
-      where: { id },
+      where: { id, user: { companyId: authResult.user.companyId } },
       data: { baustelleId: body.baustelleId ?? null },
       include: {
         user: { select: { id: true, name: true, email: true } },
@@ -107,7 +124,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   }
 
   const entry = await prisma.timeEntry.update({
-    where: { id },
+    where: { id, user: { companyId: authResult.user.companyId } },
     data: updateData,
     include: {
       user: { select: { id: true, name: true, email: true } },
@@ -133,7 +150,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   if ("error" in authResult) return authResult.error;
 
   const { id } = await params;
-  const existing = await prisma.timeEntry.findUnique({ where: { id } });
+  const existing = await prisma.timeEntry.findUnique({ where: { id, user: { companyId: authResult.user.companyId } } });
 
   if (!existing) {
     return NextResponse.json({ error: "Eintrag nicht gefunden" }, { status: 404 });
@@ -144,7 +161,10 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "Zugriff verweigert" }, { status: 403 });
   }
 
-  await prisma.timeEntry.delete({ where: { id } });
+  if (!isAdmin && existing.status === "APPROVED") {
+    return NextResponse.json({ error: "Freigegebene Einträge können nicht gelöscht werden" }, { status: 403 });
+  }
+  await prisma.timeEntry.delete({ where: { id, user: { companyId: authResult.user.companyId } } });
 
   if (isAdmin) {
     await logAdminAction(authResult.user.id, "DELETE", "TimeEntry", id, "Zeiteintrag gelöscht");

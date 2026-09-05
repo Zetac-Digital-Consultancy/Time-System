@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const format = searchParams.get("format") ?? "excel";
 
-  const where: Prisma.TimeEntryWhereInput = {};
+  const where: Prisma.TimeEntryWhereInput = { user: { companyId: authResult.user.companyId } };
   const userId = searchParams.get("userId");
   const baustelleId = searchParams.get("baustelleId");
   const dateFrom = searchParams.get("dateFrom");
@@ -51,11 +51,12 @@ export async function GET(request: NextRequest) {
   }));
 
   if (format === "excel") {
-    const XLSX = await import("xlsx");
-    const worksheet = XLSX.utils.json_to_sheet(rows);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Zeiteinträge");
-    const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+    const { Workbook } = await import("exceljs");
+    const workbook = new Workbook();
+    const worksheet = workbook.addWorksheet("Zeiteinträge");
+    worksheet.columns = ["Mitarbeiter", "Email", "Datum", "Start", "Ende", "Pause", "Stunden", "Baustelle", "Notizen"].map(key => ({ header: key, key, width: 22 }));
+    worksheet.addRows(rows);
+    const buffer = Buffer.from(await workbook.xlsx.writeBuffer());
 
     return new NextResponse(buffer, {
       headers: {

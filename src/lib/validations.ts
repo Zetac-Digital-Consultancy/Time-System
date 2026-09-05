@@ -1,16 +1,20 @@
 import { z } from "zod";
 
+export const passwordSchema = z.string().min(15, "Mindestens 15 Zeichen verwenden")
+  .refine(value => new TextEncoder().encode(value).length <= 72, "Maximal 72 UTF-8-Bytes verwenden");
+
 export const loginSchema = z.object({
-  email: z.string().email("Ungültige E-Mail-Adresse"),
-  password: z.string().min(1, "Passwort ist erforderlich"),
+  email: z.string().trim().toLowerCase().email("Ungültige E-Mail-Adresse").max(254),
+  password: z.string().min(1, "Passwort ist erforderlich").max(256),
+  otp: z.string().max(6).optional(),
 });
 
 const timeEntryBaseSchema = z
   .object({
-    workDate: z.string().min(1, "Arbeitsdatum ist erforderlich"),
-    startTime: z.string().regex(/^\d{2}:\d{2}$/, "Format: HH:MM"),
-    endTime: z.string().regex(/^\d{2}:\d{2}$/, "Format: HH:MM"),
-    breakMinutes: z.number().min(0).max(480),
+    workDate: z.iso.date("Gültiges Arbeitsdatum ist erforderlich"),
+    startTime: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/, "Gültige Uhrzeit HH:MM erforderlich"),
+    endTime: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/, "Gültige Uhrzeit HH:MM erforderlich"),
+    breakMinutes: z.number().int().min(0).max(480),
     notes: z.string().max(1000).optional(),
   })
   .refine(
@@ -19,9 +23,10 @@ const timeEntryBaseSchema = z
       const [eh, em] = data.endTime.split(":").map(Number);
       const start = sh * 60 + sm;
       const end = eh * 60 + em;
-      return end > start || end + 24 * 60 > start;
+      const duration = (end - start + 24 * 60) % (24 * 60);
+      return duration > 0 && data.breakMinutes <= duration;
     },
-    { message: "Endzeit muss nach Startzeit liegen", path: ["endTime"] }
+    { message: "Arbeitsdauer muss positiv sein; Pause darf sie nicht überschreiten", path: ["endTime"] }
   );
 
 export const employeeTimeEntrySchema = timeEntryBaseSchema;
@@ -40,11 +45,9 @@ export const timeEntryFormSchema = timeEntryBaseSchema.extend({
 export const timeEntrySchema = employeeTimeEntrySchema;
 
 export const employeeSchema = z.object({
-  name: z.string().min(2, "Name muss mindestens 2 Zeichen haben"),
-  email: z.string().email("Ungültige E-Mail-Adresse"),
-  password: z
-    .string()
-    .min(8, "Passwort muss mindestens 8 Zeichen haben")
+  name: z.string().trim().min(2, "Name muss mindestens 2 Zeichen haben").max(150),
+  email: z.string().trim().toLowerCase().email("Ungültige E-Mail-Adresse").max(254),
+  password: passwordSchema
     .optional()
     .or(z.literal("")),
   status: z.enum(["ACTIVE", "INACTIVE"]),

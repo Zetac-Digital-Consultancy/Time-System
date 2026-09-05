@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   if ("error" in authResult) return authResult.error;
 
   const { searchParams } = request.nextUrl;
-  const where: Prisma.WorkTimerWhereInput = {};
+  const where: Prisma.WorkTimerWhereInput = { user: { companyId: authResult.user.companyId } };
 
   const userId = searchParams.get("userId");
   if (userId) where.userId = userId;

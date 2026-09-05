@@ -43,10 +43,12 @@ interface TimeEntriesTableProps {
   filters?: Record<string, string>;
 }
 
+const EMPTY_FILTERS: Record<string, string> = {};
+
 export function TimeEntriesTable({
   showEmployee = false,
   isAdmin = false,
-  filters = {},
+  filters = EMPTY_FILTERS,
 }: TimeEntriesTableProps) {
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +57,6 @@ export function TimeEntriesTable({
   const [timerDialogOpen, setTimerDialogOpen] = useState(false);
 
   const fetchEntries = useCallback(async () => {
-    setLoading(true);
     const params = new URLSearchParams(filters);
     const res = await fetch(`/api/time-entries?${params}`);
     const data = await res.json();
@@ -64,6 +65,8 @@ export function TimeEntriesTable({
   }, [filters]);
 
   useEffect(() => {
+    // State updates happen after the awaited network response.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchEntries();
   }, [fetchEntries]);
 

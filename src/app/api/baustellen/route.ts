@@ -8,6 +8,7 @@ export async function GET() {
   if ("error" in authResult) return authResult.error;
 
   const baustellen = await prisma.baustelle.findMany({
+    where: { companyId: authResult.user.companyId },
     orderBy: { name: "asc" },
     include: {
       _count: { select: { timeEntries: true } },
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const baustelle = await prisma.baustelle.create({ data: parsed.data });
+  const baustelle = await prisma.baustelle.create({ data: { ...parsed.data, companyId: authResult.user.companyId } });
 
   await logAdminAction(
     authResult.user.id,

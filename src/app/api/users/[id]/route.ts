@@ -12,7 +12,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
   const { id } = await params;
   const user = await prisma.user.findUnique({
-    where: { id },
+    where: { id, companyId: authResult.user.companyId, role: "EMPLOYEE" },
     select: {
       id: true,
       name: true,
@@ -36,6 +36,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
   const { id } = await params;
   const body = await request.json();
+  if (!(await prisma.user.findFirst({ where: { id, companyId: authResult.user.companyId, role: "EMPLOYEE" }, select: { id: true } }))) {
+    return NextResponse.json({ error: "Mitarbeiter nicht gefunden" }, { status: 404 });
+  }
   const parsed = employeeSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
@@ -45,14 +48,16 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     name: parsed.data.name,
     email: parsed.data.email.toLowerCase(),
     status: parsed.data.status,
+    sessionVersion: { increment: 1 },
   };
 
   if (parsed.data.password) {
     updateData.password = await bcrypt.hash(parsed.data.password, 12);
+    updateData.mustChangePassword = true;
   }
 
   const user = await prisma.user.update({
-    where: { id },
+    where: { id, companyId: authResult.user.companyId, role: "EMPLOYEE" },
     data: updateData,
     select: {
       id: true,

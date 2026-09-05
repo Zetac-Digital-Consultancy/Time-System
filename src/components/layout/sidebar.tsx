@@ -67,14 +67,12 @@ function resolveSidebarWidth(tabletCollapsed: boolean): string {
 
 export function Sidebar({ navItems, role, userName }: SidebarProps) {
   const pathname = usePathname();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobilePath, setMobilePath] = useState<string | null>(null);
+  const mobileOpen = mobilePath === pathname;
   const [tabletCollapsed, setTabletCollapsed] = useState(false);
 
-  const closeMobile = useCallback(() => setMobileOpen(false), []);
+  const closeMobile = useCallback(() => setMobilePath(null), []);
 
-  useEffect(() => {
-    closeMobile();
-  }, [pathname, closeMobile]);
 
   useEffect(() => {
     const updateSidebarWidth = () => {
@@ -124,7 +122,7 @@ export function Sidebar({ navItems, role, userName }: SidebarProps) {
           size="icon"
           aria-label="Menü öffnen"
           aria-expanded={mobileOpen}
-          onClick={() => setMobileOpen(true)}
+          onClick={() => setMobilePath(pathname)}
         >
           <Menu className="h-5 w-5" />
         </Button>
@@ -226,7 +224,7 @@ function SidebarPanel({
         <div className={cn("min-w-0", compact && "hidden lg:block")}>
           <p className="font-bold text-sm leading-tight">ZeitTrack</p>
           <p className="text-[11px] text-muted-foreground xl:text-xs 2xl:text-xs">
-            {role === "ADMIN" ? "Verwaltung" : "Mitarbeiter"}
+            {role === "PLATFORM_ADMIN" ? "Plattform" : role === "ADMIN" ? "Verwaltung" : "Mitarbeiter"}
           </p>
         </div>
       </div>
@@ -285,7 +283,7 @@ function SidebarPanel({
             {userName}
           </p>
           <p className="text-[11px] text-muted-foreground xl:text-xs">
-            {role === "ADMIN" ? "Administrator" : "Mitarbeiter"}
+            {role === "PLATFORM_ADMIN" ? "Plattform-Administrator" : role === "ADMIN" ? "Administrator" : "Mitarbeiter"}
           </p>
         </div>
         <div className={cn("flex items-center gap-1.5", compact && "flex-col lg:flex-row", "2xl:gap-2")}>

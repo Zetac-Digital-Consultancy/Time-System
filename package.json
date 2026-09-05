@@ -14,7 +14,12 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
-    "postinstall": "prisma generate && node scripts/verify-deps.mjs"
+    "postinstall": "prisma generate && node scripts/verify-deps.mjs",
+    "db:deploy": "prisma migrate deploy",
+    "admin:create": "tsx scripts/platform-admin.ts",
+    "admin:recover": "tsx scripts/platform-admin.ts --recover",
+    "test": "tsx --test tests/*.test.ts",
+    "typecheck": "tsc --noEmit"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -40,22 +45,25 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "dotenv": "^17.4.2",
+    "exceljs": "^4.4.0",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "lucide-react": "^1.18.0",
-    "next": "16.2.9",
+    "next": "^16.3.4",
     "next-auth": "^5.0.0-beta.31",
     "next-themes": "^0.4.6",
     "oauth4webapi": "^3.8.6",
+    "otpauth": "^9.5.2",
     "pg": "^8.21.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.79.0",
     "tailwind-merge": "^3.6.0",
-    "xlsx": "^0.18.5",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@electric-sql/pglite-socket": "^0.2.11",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
@@ -63,10 +71,17 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.9",
+    "eslint-config-next": "^16.3.4",
     "prisma": "^7.8.0",
     "tailwindcss": "^4",
     "tsx": "^4.22.4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "deepmerge-ts": "^8.0.0",
+    "mysql2": "^3.24.0",
+    "exceljs": {
+      "uuid": "^11.1.1"
+    }
   }
 }

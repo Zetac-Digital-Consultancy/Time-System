@@ -11,7 +11,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
   const { id } = await params;
   const baustelle = await prisma.baustelle.findUnique({
-    where: { id },
+    where: { id, companyId: authResult.user.companyId },
     include: {
       _count: { select: { timeEntries: true } },
     },
@@ -30,13 +30,16 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
   const { id } = await params;
   const body = await request.json();
+  if (!(await prisma.baustelle.findFirst({ where: { id, companyId: authResult.user.companyId }, select: { id: true } }))) {
+    return NextResponse.json({ error: "Baustelle nicht gefunden" }, { status: 404 });
+  }
   const parsed = baustelleSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
   const baustelle = await prisma.baustelle.update({
-    where: { id },
+    where: { id, companyId: authResult.user.companyId },
     data: parsed.data,
   });
 
@@ -56,7 +59,10 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   if ("error" in authResult) return authResult.error;
 
   const { id } = await params;
-  const baustelle = await prisma.baustelle.delete({ where: { id } });
+  if (!(await prisma.baustelle.findFirst({ where: { id, companyId: authResult.user.companyId }, select: { id: true } }))) {
+    return NextResponse.json({ error: "Baustelle nicht gefunden" }, { status: 404 });
+  }
+  const baustelle = await prisma.baustelle.delete({ where: { id, companyId: authResult.user.companyId } });
 
   await logAdminAction(
     authResult.user.id,

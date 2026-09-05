@@ -1,172 +1,56 @@
 # ZeitTrack
 
-Moderne SaaS-Webanwendung für Zeiterfassung und Mitarbeiterverwaltung im Bauwesen.
+Zeiterfassung für Bauunternehmen mit getrennten Firmenzugängen.
 
-## Tech Stack
+- Plattform-Admins verwalten Firmen und Firmenadmins; Anmeldung mit Passwort und Authenticator-Code.
+- Firmenadmins verwalten ausschließlich Mitarbeiter, Baustellen und Arbeitszeiten ihrer Firma.
+- Mitarbeiter erfassen ihre eigenen Zeiten. Neue temporäre Passwörter müssen vor der ersten Nutzung geändert werden.
+- Arbeits-Timer unterstützen Pausen und Schichten über Mitternacht. Geschäftszeitzone: Europe/Berlin.
+- PDF-/Excel-Exporte und Audit-Protokolle sind firmenbezogen.
 
-- **Next.js 15+** (App Router)
-- **TypeScript**
-- **Tailwind CSS** + shadcn/ui
-- **Prisma ORM** + PostgreSQL
-- **NextAuth.js** (Auth.js v5)
-- **React Hook Form** + Zod
-- **PDF/Excel Export** (jsPDF, xlsx)
+Technik: Next.js 16, React 19, Auth.js 5, Prisma 7, PostgreSQL, Tailwind CSS.
 
-## Features
+## Produktion
 
-### Mitarbeiter
-- Persönliches Dashboard mit Tages-, Wochen- und Monatsübersicht
-- Manuelle Zeiterfassung (Datum, Start/Ende, Pause, Notizen)
-- Nur eigene Einträge einsehen und bearbeiten (bis zur Freigabe)
-- Benachrichtigungen bei Genehmigung/Ablehnung
-
-### Administrator
-- Mitarbeiterverwaltung (CRUD, Aktivieren/Deaktivieren)
-- Alle Zeiteinträge einsehen, filtern, bearbeiten
-- Baustellen zuweisen
-- Freigabe-Workflow (Genehmigen/Ablehnen)
-- Dashboard mit Kennzahlen
-- PDF- und Excel-Export
-- Audit-Protokoll
-
-## Deployment (Docker, Linux-Host)
-
-Die App läuft als Container-Stack (Next.js + PostgreSQL) und ist für jeden
-Linux-Host mit Docker geeignet. Benötigt: Docker Engine + Compose-Plugin.
+**Zuerst [docs/PRODUCTION.md](docs/PRODUCTION.md) lesen**, besonders bei einer bestehenden Datenbank. Der bisherige `db push`-Ablauf wurde durch versionierte Migrationen ersetzt. Bestehende Daten werden erhalten und zunächst einer gesperrten Firma zur Prüfung zugeordnet. Demo-Accounts werden deaktiviert.
 
 ```bash
-# 1. Umgebungsvariablen anlegen und Secrets setzen
 cp .env.example .env
-nano .env                      # POSTGRES_PASSWORD, AUTH_SECRET, AUTH_URL ...
-
-# AUTH_SECRET erzeugen:
-openssl rand -base64 32
-
-# 2. Erststart MIT Demo-Daten: in .env RUN_SEED=true setzen, dann:
+# Echte Secrets und HTTPS-Domain eintragen. Reverse Proxy bereitstellen.
 docker compose up -d --build
-
-# 3. Danach RUN_SEED=false zurücksetzen (Seed löscht sonst alle Daten neu).
+docker compose run --rm migrate npx tsx scripts/platform-admin.ts
 ```
 
-Der Stack besteht aus drei Services:
+Der interaktive Befehl erstellt einen individuellen Plattform-Admin mit verborgen eingegebenem Passwort und MFA. Danach Firmen und Firmenadmins in der Plattformverwaltung anlegen. Es gibt keine festen Produktions-Zugangsdaten.
 
-| Service   | Rolle                                                                 |
-|-----------|-----------------------------------------------------------------------|
-| `db`      | PostgreSQL 17 mit persistentem Volume `db-data`                       |
-| `migrate` | Einmal-Job: synchronisiert das Schema (`prisma db push`), optional Seed |
-| `app`     | Next.js (Standalone-Build), läuft als Nicht-Root-User, Port 3000      |
+## Entwicklung
 
-Die App ist anschließend unter `http://<host>:${APP_PORT}` (Standard 3000)
-erreichbar. Für Produktion einen Reverse-Proxy (nginx/Caddy/Traefik) mit
-TLS davorschalten und `AUTH_URL`/`NEXTAUTH_URL` auf die öffentliche Domain
-setzen.
-
-**Hinweise:**
-- Healthcheck-Endpoint: `GET /api/health` (prüft auch die DB-Verbindung).
-- Schema-Änderungen werden bei jedem `up` über den `migrate`-Service
-  idempotent angewandt (`prisma db push`). Die Migrationshistorie ist
-  bewusst nicht maßgeblich.
-- Datenbank-Backup: `docker compose exec db pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" > backup.sql`
+Node.js 22+, PostgreSQL und npm installieren. Eine separate Entwicklungsdatenbank verwenden; `DATABASE_URL`, `AUTH_SECRET` und `AUTH_URL=http://localhost:3000` entsprechend setzen.
 
 ```bash
-# Logs ansehen / Stack stoppen
-docker compose logs -f app
-docker compose down            # Container stoppen (Daten bleiben im Volume)
-docker compose down -v         # inkl. Datenbank-Volume löschen
-```
-
-## Lokale Entwicklung
-
-### 1. Abhängigkeiten installieren
-
-```bash
-npm install
-```
-
-### 2. Umgebungsvariablen
-
-```bash
-cp .env.example .env
-```
-
-Bearbeiten Sie `.env`:
-
-```env
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/zeittrack?schema=public"
-AUTH_SECRET="ihr-sicheres-geheimnis-min-32-zeichen"
-NEXTAUTH_URL="http://localhost:3000"
-```
-
-`AUTH_SECRET` generieren:
-
-```bash
-openssl rand -base64 32
-```
-
-### 3. Datenbank einrichten
-
-```bash
-npx prisma migrate dev --name init
-npx prisma db seed
-```
-
-### 4. Entwicklungsserver starten
-
-```bash
+npm ci
+npm run db:deploy
 npm run dev
 ```
 
-Öffnen Sie [http://localhost:3000](http://localhost:3000)
+Optionaler **destruktiver** Reset einer wegwerfbaren lokalen Demo-Datenbank:
 
-## Demo-Zugangsdaten
-
-| Rolle       | E-Mail                          | Passwort        |
-|-------------|----------------------------------|-----------------|
-| Admin       | admin@bauunternehmen.de          | admin123        |
-| Mitarbeiter | max.mueller@bauunternehmen.de    | mitarbeiter123  |
-
-## Projektstruktur
-
-```
-src/
-├── app/
-│   ├── (dashboard)/          # Geschützte Bereiche mit Sidebar
-│   │   ├── admin/            # Admin-Seiten
-│   │   └── employee/         # Mitarbeiter-Seiten
-│   ├── api/                  # REST API Routes
-│   ├── login/                # Login-Seite
-│   └── layout.tsx
-├── components/
-│   ├── ui/                   # shadcn/ui Komponenten
-│   ├── forms/                # Formulare
-│   └── layout/               # Sidebar, Navigation
-├── lib/
-│   ├── auth.ts               # (via src/auth.ts)
-│   ├── prisma.ts             # Datenbank-Client
-│   ├── validations.ts        # Zod-Schemas
-│   └── time-utils.ts         # Stundenberechnung
-└── generated/prisma/         # Prisma Client
-prisma/
-├── schema.prisma
-└── seed.ts
+```bash
+NODE_ENV=development ALLOW_DEMO_RESET=true npm run db:seed
 ```
 
-## Sicherheit
+Dies ist in Produktion gesperrt. Demo-Zugangsdaten werden weder auf der Login-Seite noch in Produktionsanleitungen angezeigt.
 
-- JWT-basierte Sessions (NextAuth)
-- bcrypt Passwort-Hashing (12 Rounds)
-- Rollenbasierte Zugriffskontrolle (RBAC)
-- Middleware-Schutz für Routen
-- API-Autorisierung pro Endpunkt
-- Eingabevalidierung mit Zod
-- Mitarbeiter sehen nur eigene Daten
+## Prüfung
 
-## Skripte
+```bash
+npm run lint
+npm run build
+npm test
+npm run typecheck
+npm audit
+```
 
-| Befehl              | Beschreibung                    |
-|---------------------|---------------------------------|
-| `npm run dev`       | Entwicklungsserver              |
-| `npm run build`     | Produktions-Build               |
-| `npm run db:migrate`| Datenbank-Migrationen           |
-| `npm run db:seed`   | Demo-Daten laden                |
-| `npm run db:studio` | Prisma Studio (DB-Browser)      |
+Die Integrationstests verwenden eine isolierte PostgreSQL-WASM-Datenbank und den zuvor gebauten Server auf Loopback. Sie prüfen unter anderem Firmentrennung, MFA, Session-Widerruf, Migrationen, Aktivierungslinks, Exporte und Timer.
+
+Backups: `scripts/backup.sh`. Healthcheck: `/api/health` und `scripts/check-health.mjs`. Betreiberangaben für den Datenschutz: [docs/DATA-PROTECTION.md](docs/DATA-PROTECTION.md).

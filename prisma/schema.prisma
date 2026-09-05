@@ -8,6 +8,7 @@ datasource db {
 }
 
 enum Role {
+  PLATFORM_ADMIN
   ADMIN
   EMPLOYEE
 }
@@ -49,6 +50,13 @@ model User {
   role      Role       @default(EMPLOYEE)
   status    UserStatus @default(ACTIVE)
   createdAt DateTime   @default(now()) @map("created_at")
+  companyId String? @map("company_id")
+  company Company? @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  sessionVersion Int @default(0) @map("session_version")
+  mustChangePassword Boolean @default(false) @map("must_change_password")
+  mfaSecret String? @map("mfa_secret")
+  mfaLastStep Int @default(-1) @map("mfa_last_step")
+  accountTokens AccountToken[]
 
   timeEntries   TimeEntry[]
   workTimers    WorkTimer[]
@@ -56,6 +64,35 @@ model User {
   auditLogs     AuditLog[] @relation("AdminAuditLogs")
 
   @@map("users")
+  @@index([companyId])
+}
+
+model Company {
+  id String @id @default(cuid())
+  name String
+  status UserStatus @default(ACTIVE)
+  createdAt DateTime @default(now()) @map("created_at")
+  users User[]
+  baustellen Baustelle[]
+  @@map("companies")
+}
+
+model AccountToken {
+  id String @id @default(cuid())
+  tokenHash String @unique @map("token_hash")
+  userId String @map("user_id")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime @map("expires_at")
+  @@index([userId])
+  @@map("account_tokens")
+}
+
+model LoginAttempt {
+  key String @id
+  attempts Int
+  windowStart DateTime @map("window_start")
+  @@index([windowStart])
+  @@map("login_attempts")
 }
 
 model Baustelle {
@@ -64,10 +101,13 @@ model Baustelle {
   address     String?
   description String?
   createdAt   DateTime @default(now()) @map("created_at")
+  companyId String @map("company_id")
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
 
   timeEntries TimeEntry[]
 
   @@map("baustellen")
+  @@index([companyId])
 }
 
 model TimeEntry {
@@ -125,6 +165,7 @@ model TimerSegment {
   startTime       String   @map("start_time")
   endTime         String?  @map("end_time")
   durationMinutes Int?     @map("duration_minutes")
+  endedAt DateTime? @map("ended_at")
   createdAt       DateTime @default(now()) @map("created_at")
 
   workTimer WorkTimer @relation(fields: [workTimerId], references: [id], onDelete: Cascade)

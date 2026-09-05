@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { Sidebar } from "@/components/layout/sidebar";
-import { NAV_ADMIN, NAV_EMPLOYEE } from "@/lib/constants";
+import { NAV_ADMIN, NAV_EMPLOYEE, NAV_PLATFORM } from "@/lib/constants";
 import { logAuthEvent } from "@/lib/auth-logger";
 import { redirect } from "next/navigation";
 
@@ -19,8 +19,9 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
+  if (session.user.mustChangePassword) redirect("/account/password");
   const isAdmin = session.user.role === "ADMIN";
-  const navItems = isAdmin ? NAV_ADMIN : NAV_EMPLOYEE;
+  const navItems = session.user.role === "PLATFORM_ADMIN" ? NAV_PLATFORM : isAdmin ? NAV_ADMIN : NAV_EMPLOYEE;
 
   return (
     <div className="min-h-dvh bg-muted/30">

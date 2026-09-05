@@ -131,7 +131,6 @@ export default function AdminTimeEntriesPage() {
   }, []);
 
   const loadEntries = useCallback(async () => {
-    setLoading(true);
     const params = new URLSearchParams();
     if (userId !== "all") params.set("userId", userId);
     if (dateFrom) params.set("dateFrom", dateFrom);
@@ -142,6 +141,8 @@ export default function AdminTimeEntriesPage() {
   }, [userId, dateFrom, dateTo]);
 
   useEffect(() => {
+    // State updates happen after the awaited network response.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadEntries();
   }, [loadEntries]);
 

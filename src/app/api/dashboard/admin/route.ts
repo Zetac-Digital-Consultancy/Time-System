@@ -1,3 +1,4 @@
+import { businessDate } from "@/lib/business-date";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/api-auth";
@@ -9,8 +10,7 @@ export async function GET() {
   if ("error" in authResult) return authResult.error;
 
   const now = new Date();
-  const todayStart = new Date(now);
-  todayStart.setHours(0, 0, 0, 0);
+  const todayStart = businessDate(now);
   const weekStart = getStartOfWeek(now);
   const monthStart = getStartOfMonth(now);
 
@@ -22,14 +22,15 @@ export async function GET() {
     hoursByEmployee,
     hoursByBaustelle,
   ] = await Promise.all([
-    prisma.user.count({ where: { role: "EMPLOYEE", status: "ACTIVE" } }),
+    prisma.user.count({ where: { role: "EMPLOYEE", status: "ACTIVE", companyId: authResult.user.companyId } }),
     prisma.timeEntry.findMany({
-      where: { workDate: { gte: todayStart, lte: getEndOfDay(now) } },
+      where: { user: { companyId: authResult.user.companyId }, workDate: { gte: todayStart, lte: getEndOfDay(now) } },
     }),
     prisma.timeEntry.findMany({
-      where: { workDate: { gte: weekStart } },
+      where: { user: { companyId: authResult.user.companyId }, workDate: { gte: weekStart } },
     }),
     prisma.timeEntry.findMany({
+      where: { user: { companyId: authResult.user.companyId } },
       take: 10,
       orderBy: { createdAt: "desc" },
       include: {
@@ -40,18 +41,18 @@ export async function GET() {
     prisma.timeEntry.groupBy({
       by: ["userId"],
       _sum: { totalHours: true },
-      where: { workDate: { gte: monthStart } },
+      where: { user: { companyId: authResult.user.companyId }, workDate: { gte: monthStart } },
     }),
     prisma.timeEntry.groupBy({
       by: ["baustelleId"],
       _sum: { totalHours: true },
-      where: { workDate: { gte: monthStart }, baustelleId: { not: null } },
+      where: { user: { companyId: authResult.user.companyId }, workDate: { gte: monthStart }, baustelleId: { not: null } },
     }),
   ]);
 
   const employeeIds = hoursByEmployee.map((h) => h.userId);
   const employees = await prisma.user.findMany({
-    where: { id: { in: employeeIds } },
+    where: { id: { in: employeeIds }, companyId: authResult.user.companyId },
     select: { id: true, name: true },
   });
 
@@ -59,7 +60,7 @@ export async function GET() {
     .map((h) => h.baustelleId)
     .filter((id): id is string => id !== null);
   const baustellen = await prisma.baustelle.findMany({
-    where: { id: { in: baustelleIds } },
+    where: { id: { in: baustelleIds }, companyId: authResult.user.companyId },
     select: { id: true, name: true },
   });
 

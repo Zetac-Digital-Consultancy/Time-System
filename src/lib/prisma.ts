@@ -28,9 +28,7 @@ function createPrismaClient(): PrismaClient {
   }
 
   const pool = globalForPrisma.pgPool ?? new pg.Pool({ connectionString });
-  if (process.env.NODE_ENV !== "production") {
-    globalForPrisma.pgPool = pool;
-  }
+  globalForPrisma.pgPool = pool;
 
   const adapter = new PrismaPg(pool);
 
@@ -55,9 +53,7 @@ function getPrismaClient(): PrismaClient {
   }
 
   const client = createPrismaClient();
-  if (process.env.NODE_ENV !== "production") {
-    globalForPrisma.prisma = client;
-  }
+  globalForPrisma.prisma = client;
   return client;
 }
 

@@ -4,6 +4,10 @@ import bcrypt from "bcryptjs";
 import pg from "pg";
 import "dotenv/config";
 
+if (process.env.NODE_ENV !== "development" || process.env.ALLOW_DEMO_RESET !== "true") {
+  throw new Error("Demo reset is allowed only with NODE_ENV=development and ALLOW_DEMO_RESET=true on a disposable database.");
+}
+
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
   throw new Error("DATABASE_URL environment variable is not set");
@@ -15,6 +19,7 @@ const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log("Seeding database...");
+  await prisma.company.upsert({ where: { id: "demo-company" }, create: { id: "demo-company", name: "Demo Bauunternehmen" }, update: {} });
 
   await prisma.notification.deleteMany();
   await prisma.auditLog.deleteMany();
@@ -31,6 +36,7 @@ async function main() {
       email: "admin@bauunternehmen.de",
       password: adminPassword,
       role: "ADMIN",
+        companyId: "demo-company",
       status: "ACTIVE",
     },
   });
@@ -42,6 +48,7 @@ async function main() {
         email: "max.mueller@bauunternehmen.de",
         password: employeePassword,
         role: "EMPLOYEE",
+        companyId: "demo-company",
         status: "ACTIVE",
       },
     }),
@@ -51,6 +58,7 @@ async function main() {
         email: "anna.schmidt@bauunternehmen.de",
         password: employeePassword,
         role: "EMPLOYEE",
+        companyId: "demo-company",
         status: "ACTIVE",
       },
     }),
@@ -60,6 +68,7 @@ async function main() {
         email: "thomas.weber@bauunternehmen.de",
         password: employeePassword,
         role: "EMPLOYEE",
+        companyId: "demo-company",
         status: "ACTIVE",
       },
     }),
@@ -69,6 +78,7 @@ async function main() {
         email: "lisa.fischer@bauunternehmen.de",
         password: employeePassword,
         role: "EMPLOYEE",
+        companyId: "demo-company",
         status: "ACTIVE",
       },
     }),
@@ -78,6 +88,7 @@ async function main() {
         email: "michael.hoffmann@bauunternehmen.de",
         password: employeePassword,
         role: "EMPLOYEE",
+        companyId: "demo-company",
         status: "ACTIVE",
       },
     }),
@@ -86,6 +97,7 @@ async function main() {
   const baustellen = await Promise.all([
     prisma.baustelle.create({
       data: {
+        companyId: "demo-company",
         name: "Wohnungsbau Berlin-Mitte",
         address: "Friedrichstraße 123, 10117 Berlin",
         description: "Neubau eines Wohnkomplexes mit 48 Einheiten",
@@ -93,6 +105,7 @@ async function main() {
     }),
     prisma.baustelle.create({
       data: {
+        companyId: "demo-company",
         name: "Bürogebäude München",
         address: "Leopoldstraße 45, 80802 München",
         description: "Sanierung und Erweiterung eines Bürogebäudes",
@@ -100,6 +113,7 @@ async function main() {
     }),
     prisma.baustelle.create({
       data: {
+        companyId: "demo-company",
         name: "Brückensanierung Hamburg",
         address: "Elbbrücke Nord, 20457 Hamburg",
         description: "Instandsetzung der nördlichen Elbbrücke",
@@ -212,8 +226,8 @@ async function main() {
   });
 
   console.log("Seed completed:");
-  console.log(`  Admin: ${admin.email} / admin123`);
-  console.log(`  Employees: 5 (password: mitarbeiter123)`);
+
+
   console.log(`  Baustellen: ${baustellen.length}`);
   console.log(`  Time entries: ${timeEntries.length}`);
 }

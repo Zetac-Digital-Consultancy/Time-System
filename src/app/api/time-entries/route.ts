@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   const { user } = authResult;
   const { searchParams } = request.nextUrl;
 
-  const where: Prisma.TimeEntryWhereInput = {};
+  const where: Prisma.TimeEntryWhereInput = { user: { companyId: authResult.user.companyId } };
 
   if (user.role === "EMPLOYEE") {
     where.userId = user.id;

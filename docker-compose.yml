@@ -3,8 +3,7 @@
 #   cp .env.example .env   # then edit secrets
 #   docker compose up -d --build
 #
-# First run (or to reset demo data): set RUN_SEED=true in .env for the
-# initial `up`, then set it back to false.
+# No demo seeding. Read docs/PRODUCTION.md before upgrading an existing DB.
 
 services:
   db:
@@ -26,14 +25,15 @@ services:
     # ports:
     #   - "127.0.0.1:5432:5432"
 
-  # One-shot: syncs the schema (prisma db push) and optionally seeds.
+  # One-shot: applies reviewed production migrations.
   migrate:
     build:
       context: .
       target: migrator
     environment:
       DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL in .env}
-      RUN_SEED: ${RUN_SEED:-false}
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env}
+      AUTH_URL: ${AUTH_URL:?set HTTPS AUTH_URL in .env}
     depends_on:
       db:
         condition: service_healthy
@@ -46,10 +46,10 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
+      TZ: Europe/Berlin
       DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL in .env}
       AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env}
-      AUTH_URL: ${AUTH_URL:-http://localhost:3000}
-      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      AUTH_URL: ${AUTH_URL:?set HTTPS AUTH_URL in .env}
       AUTH_TRUST_HOST: ${AUTH_TRUST_HOST:-true}
       # Register with the shared nginx-proxy + acme-companion for HTTPS on its subdomain
       VIRTUAL_HOST: time-system.zetac.de

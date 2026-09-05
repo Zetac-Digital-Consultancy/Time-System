@@ -31,6 +31,7 @@ interface SerializedTimer {
   workedMinutes: number;
   workedSeconds: number;
   activeSegmentStart: string | null;
+  activeSegmentStartedAt?: string | null;
   segments: TimerSegment[];
   events: TimerEvent[];
   timeEntry: {
@@ -55,12 +56,8 @@ interface WorkTimerCardProps {
 
 function getLiveSeconds(state: WorkTimerState): number {
   let total = state.segments.reduce((sum, seg) => sum + (seg.durationMinutes ?? 0) * 60, 0);
-  if (state.status === "RUNNING" && state.activeSegmentStart) {
-    const now = new Date();
-    const [h, m] = state.activeSegmentStart.split(":").map(Number);
-    const start = new Date(now);
-    start.setHours(h, m, 0, 0);
-    total += Math.max(0, Math.floor((now.getTime() - start.getTime()) / 1000));
+  if (state.status === "RUNNING" && state.activeSegmentStartedAt) {
+    total += Math.max(0, Math.floor((Date.now() - new Date(state.activeSegmentStartedAt).getTime()) / 1000));
   }
   return total;
 }
@@ -88,21 +85,13 @@ export function WorkTimerCard({ onStopped }: WorkTimerCardProps) {
     );
   }, []);
 
-  const fetchState = useCallback(async () => {
-    const res = await fetch("/api/work-timer");
-    const data = (await res.json()) as WorkTimerState & { error?: string };
-    if (!res.ok) {
-      throw new Error(data.error ?? "Timer konnte nicht geladen werden");
-    }
-    applyState(data);
-    return data;
-  }, [applyState]);
-
   useEffect(() => {
-    fetchState()
+    fetch("/api/work-timer")
+      .then(async res => { if (!res.ok) throw new Error("Timer konnte nicht geladen werden"); return res.json(); })
+      .then(applyState)
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [fetchState]);
+  }, [applyState]);
 
   useEffect(() => {
     if (!state || state.status !== "RUNNING") return;

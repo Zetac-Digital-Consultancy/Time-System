@@ -1,3 +1,4 @@
+import { businessDate, businessTime, elapsedMinutes } from "@/lib/business-date";
 import { parseTimeToMinutes } from "@/lib/time-utils";
 
 export type TimerSegmentLike = {
@@ -5,18 +6,16 @@ export type TimerSegmentLike = {
   startTime: string;
   endTime: string | null;
   durationMinutes: number | null;
+  createdAt?: Date | string;
+  endedAt?: Date | string | null;
 };
 
 export function formatTimeOfDay(date: Date = new Date()): string {
-  const hours = date.getHours().toString().padStart(2, "0");
-  const minutes = date.getMinutes().toString().padStart(2, "0");
-  return `${hours}:${minutes}`;
+  return businessTime(date);
 }
 
 export function getTodayDateOnly(date: Date = new Date()): Date {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d;
+  return businessDate(date);
 }
 
 export function minutesBetweenTimes(startTime: string, endTime: string): number {
@@ -35,7 +34,9 @@ export function calculateBreakMinutesBetweenSegments(segments: TimerSegmentLike[
     const current = sorted[i];
     const next = sorted[i + 1];
     if (current.endTime) {
-      breakMinutes += minutesBetweenTimes(current.endTime, next.startTime);
+      breakMinutes += current.endedAt && next.createdAt
+        ? elapsedMinutes(current.endedAt, next.createdAt)
+        : minutesBetweenTimes(current.endTime, next.startTime);
     }
   }
 
@@ -57,7 +58,8 @@ export function calculateWorkedMinutesFromSegments(
   }
 
   if (options?.activeStartTime) {
-    total += minutesBetweenTimes(options.activeStartTime, nowTime);
+    const active = segments.find(s => s.endTime === null);
+    total += active?.createdAt ? elapsedMinutes(active.createdAt, now) : minutesBetweenTimes(options.activeStartTime, nowTime);
   }
 
   return total;

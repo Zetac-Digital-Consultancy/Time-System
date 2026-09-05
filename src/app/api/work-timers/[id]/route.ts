@@ -11,7 +11,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
   const { id } = await params;
 
   const timer = await prisma.workTimer.findUnique({
-    where: { id },
+    where: { id, user: { companyId: authResult.user.companyId } },
     include: {
       user: { select: { id: true, name: true, email: true } },
       segments: { orderBy: { segmentOrder: "asc" } },

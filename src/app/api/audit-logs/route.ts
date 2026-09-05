@@ -7,6 +7,7 @@ export async function GET() {
   if ("error" in authResult) return authResult.error;
 
   const logs = await prisma.auditLog.findMany({
+    where: { admin: { companyId: authResult.user.companyId } },
     include: {
       admin: { select: { name: true, email: true } },
     },

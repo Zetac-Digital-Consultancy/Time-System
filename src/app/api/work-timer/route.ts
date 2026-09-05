@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/api-auth";
 import {
   getWorkTimerState,
-  pauseWorkTimer,
-  resumeWorkTimer,
-  startWorkTimer,
-  stopWorkTimer,
+  runTimerAction,
 } from "@/lib/work-timer-service";
 
 export async function GET() {
@@ -38,23 +35,7 @@ export async function POST(request: NextRequest) {
   const action = body.action as string;
 
   try {
-    let result;
-    switch (action) {
-      case "start":
-        result = await startWorkTimer(authResult.user.id);
-        break;
-      case "pause":
-        result = await pauseWorkTimer(authResult.user.id);
-        break;
-      case "resume":
-        result = await resumeWorkTimer(authResult.user.id);
-        break;
-      case "stop":
-        result = await stopWorkTimer(authResult.user.id);
-        break;
-      default:
-        return NextResponse.json({ error: "Ungültige Aktion" }, { status: 400 });
-    }
+    const result = await runTimerAction(authResult.user.id, authResult.user.companyId, action);
     return NextResponse.json(result);
   } catch (error) {
     console.error("[work-timer]", action, error);

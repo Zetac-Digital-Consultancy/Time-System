@@ -1,3 +1,4 @@
+import { businessDate } from "@/lib/business-date";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/api-auth";
@@ -14,8 +15,7 @@ export async function GET() {
 
   const userId = authResult.user.id;
   const now = new Date();
-  const todayStart = new Date(now);
-  todayStart.setHours(0, 0, 0, 0);
+  const todayStart = businessDate(now);
   const weekStart = getStartOfWeek(now);
   const monthStart = getStartOfMonth(now);
 

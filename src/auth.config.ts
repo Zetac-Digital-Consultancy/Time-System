@@ -1,123 +1,63 @@
 import type { NextAuthConfig } from "next-auth";
 import type { Role } from "@/generated/prisma/client";
-import { logAuthEvent } from "@/lib/auth-logger";
+import { dashboardPath } from "@/lib/access-policy";
 
 declare module "next-auth" {
   interface User {
-    role: Role;
-    id: string;
+    role: Role; companyId: string | null; sessionVersion: number; mustChangePassword: boolean;
   }
   interface Session {
     user: {
-      id: string;
-      email: string;
-      name: string;
-      role: Role;
+      id: string; email: string; name: string; role: Role;
+      companyId: string | null; sessionVersion: number; mustChangePassword: boolean;
     };
   }
 }
-
 declare module "@auth/core/jwt" {
   interface JWT {
-    id: string;
-    role: Role;
+    id: string; role: Role; companyId: string | null;
+    sessionVersion: number; mustChangePassword: boolean;
   }
 }
-
-function getDashboardPath(role: Role | undefined) {
-  return role === "ADMIN" ? "/admin/dashboard" : "/employee/dashboard";
-}
-
-// Secure cookies require HTTPS. Derive from the public URL scheme rather than
-// NODE_ENV, so cookies work when serving over plain HTTP (e.g. via IP, no domain
-// yet) and automatically become Secure once AUTH_URL is an https:// origin.
-const useSecureCookies = (process.env.AUTH_URL ?? process.env.NEXTAUTH_URL ?? "").startsWith("https://");
-
 export const authConfig = {
   secret: process.env.AUTH_SECRET,
   trustHost: true,
+  useSecureCookies: (process.env.AUTH_URL ?? "").startsWith("https://"),
   session: { strategy: "jwt", maxAge: 8 * 60 * 60 },
   pages: { signIn: "/login" },
   providers: [],
-  cookies: {
-    sessionToken: {
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: useSecureCookies,
-      },
-    },
-    csrfToken: {
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: useSecureCookies,
-      },
-    },
-    callbackUrl: {
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: useSecureCookies,
-      },
-    },
-  },
   callbacks: {
     authorized({ auth, request }) {
-      const { pathname } = request.nextUrl;
-      const isLoggedIn = !!auth?.user;
-      const role = auth?.user?.role;
-
-      const isAuthPage = pathname === "/login";
-      const isAdminRoute = pathname.startsWith("/admin");
-      const isEmployeeRoute = pathname.startsWith("/employee");
-      const isProtectedRoute = isAdminRoute || isEmployeeRoute;
-
-      if (isAuthPage && isLoggedIn) {
-        const url = getDashboardPath(role);
-        logAuthEvent("middleware.redirect.authenticated_from_login", { role, url });
-        return Response.redirect(new URL(url, request.nextUrl));
+      const path = request.nextUrl.pathname;
+      if (!auth?.user) return Response.redirect(new URL("/login", request.nextUrl));
+      const home = dashboardPath(auth.user.role);
+      if (auth.user.mustChangePassword && path !== "/account/password") {
+        return Response.redirect(new URL("/account/password", request.nextUrl));
       }
-
-      if (!isLoggedIn && (isProtectedRoute || pathname === "/")) {
-        logAuthEvent("middleware.redirect.unauthenticated", { pathname });
-        return Response.redirect(new URL("/login", request.nextUrl));
+      if (path === "/" ||
+        (path.startsWith("/platform") && auth.user.role !== "PLATFORM_ADMIN") ||
+        (path.startsWith("/admin") && auth.user.role !== "ADMIN") ||
+        (path.startsWith("/employee") && auth.user.role !== "EMPLOYEE")) {
+        return Response.redirect(new URL(home, request.nextUrl));
       }
-
-      if (isLoggedIn && isAdminRoute && role && role !== "ADMIN") {
-        logAuthEvent("middleware.redirect.wrong_role", { pathname, role, target: "/employee/dashboard" });
-        return Response.redirect(new URL("/employee/dashboard", request.nextUrl));
-      }
-
-      if (isLoggedIn && isEmployeeRoute && role && role !== "EMPLOYEE") {
-        logAuthEvent("middleware.redirect.wrong_role", { pathname, role, target: "/admin/dashboard" });
-        return Response.redirect(new URL("/admin/dashboard", request.nextUrl));
-      }
-
-      if (pathname === "/" && isLoggedIn) {
-        const url = getDashboardPath(role);
-        logAuthEvent("middleware.redirect.root", { role, url });
-        return Response.redirect(new URL(url, request.nextUrl));
-      }
-
       return true;
     },
     jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
+        token.id = user.id!;
         token.role = user.role;
-        logAuthEvent("jwt.created", { userId: user.id, role: user.role });
+        token.companyId = user.companyId;
+        token.sessionVersion = user.sessionVersion;
+        token.mustChangePassword = user.mustChangePassword;
       }
       return token;
     },
     session({ session, token }) {
-      if (session.user && token.id && token.role) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as Role;
-      }
+      session.user.id = token.id;
+      session.user.role = token.role;
+      session.user.companyId = token.companyId;
+      session.user.sessionVersion = token.sessionVersion;
+      session.user.mustChangePassword = token.mustChangePassword;
       return session;
     },
   },

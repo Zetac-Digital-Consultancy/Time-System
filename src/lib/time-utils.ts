@@ -1,3 +1,5 @@
+import { businessDate } from "./business-date";
+
 export function parseTimeToMinutes(time: string): number {
   const [hours, minutes] = time.split(":").map(Number);
   return hours * 60 + minutes;
@@ -23,23 +25,23 @@ export function calculateTotalHours(
 }
 
 export function getStartOfWeek(date: Date = new Date()): Date {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  d.setDate(diff);
-  d.setHours(0, 0, 0, 0);
+  const d = businessDate(date);
+  const day = d.getUTCDay();
+  const diff = d.getUTCDate() - day + (day === 0 ? -6 : 1);
+  d.setUTCDate(diff);
+  d.setUTCHours(0, 0, 0, 0);
   return d;
 }
 
 export function getStartOfMonth(date: Date = new Date()): Date {
-  const d = new Date(date);
-  d.setDate(1);
-  d.setHours(0, 0, 0, 0);
+  const d = businessDate(date);
+  d.setUTCDate(1);
+  d.setUTCHours(0, 0, 0, 0);
   return d;
 }
 
 export function getEndOfDay(date: Date = new Date()): Date {
-  const d = new Date(date);
-  d.setHours(23, 59, 59, 999);
+  const d = businessDate(date);
+  d.setUTCHours(23, 59, 59, 999);
   return d;
 }

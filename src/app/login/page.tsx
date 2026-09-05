@@ -10,11 +10,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { loginSchema, type LoginInput } from "@/lib/validations";
+import { dashboardPath } from "@/lib/access-policy";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-function getDashboardPath(role: string | undefined) {
-  return role === "ADMIN" ? "/admin/dashboard" : "/employee/dashboard";
-}
+
 
 export default function LoginPage() {
   const [error, setError] = useState("");
@@ -31,6 +30,7 @@ export default function LoginPage() {
     const result = await signIn("credentials", {
       email: data.email,
       password: data.password,
+      otp: data.otp,
       redirect: false,
     });
 
@@ -40,10 +40,10 @@ export default function LoginPage() {
     }
 
     const session = await getSession();
-    const dashboardPath = getDashboardPath(session?.user?.role);
+    const target = session?.user?.mustChangePassword ? "/account/password" : dashboardPath(session?.user?.role);
 
     // Full navigation ensures Safari applies the session cookie before loading protected routes
-    window.location.assign(dashboardPath);
+    window.location.assign(target);
   }
 
   return (
@@ -96,6 +96,8 @@ export default function LoginPage() {
               )}
             </div>
 
+            <div className="space-y-2"><Label htmlFor="otp">Authenticator-Code (nur Plattform-Admins)</Label><Input id="otp" inputMode="numeric" autoComplete="one-time-code" maxLength={6} {...register("otp")} /></div>
+
             {error && (
               <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
                 {error}
@@ -114,11 +116,7 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-6 rounded-lg bg-muted p-4 text-xs text-muted-foreground">
-            <p className="font-medium mb-2">Demo-Zugangsdaten:</p>
-            <p>Admin: admin@bauunternehmen.de / admin123</p>
-            <p>Mitarbeiter: max.mueller@bauunternehmen.de / mitarbeiter123</p>
-          </div>
+          <p className="mt-6 text-sm text-muted-foreground">Passwort vergessen? Wenden Sie sich an Ihren Firmenadministrator. Firmenadministratoren wenden sich an das ZeitTrack-Team.</p>
         </CardContent>
       </Card>
     </div>

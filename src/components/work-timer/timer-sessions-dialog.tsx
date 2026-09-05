@@ -47,16 +47,17 @@ interface TimerSessionsDialogProps {
 }
 
 export function TimerSessionsDialog({ timerId, open, onOpenChange }: TimerSessionsDialogProps) {
-  const [timer, setTimer] = useState<TimerDetail | null>(null);
-  const [loading, setLoading] = useState(false);
-
+  const [result, setResult] = useState<{ id: string; timer?: TimerDetail; error?: string } | null>(null);
+  const timer = result?.id === timerId ? result.timer : null;
+  const loading = open && !!timerId && result?.id !== timerId;
   useEffect(() => {
     if (!open || !timerId) return;
-    setLoading(true);
-    fetch(`/api/work-timers/${timerId}`)
-      .then((r) => r.json())
-      .then(setTimer)
-      .finally(() => setLoading(false));
+    const controller = new AbortController();
+    fetch("/api/work-timers/" + timerId, { signal: controller.signal })
+      .then(async r => { if (!r.ok) throw new Error("Timer konnte nicht geladen werden"); return r.json(); })
+      .then(timer => setResult({ id: timerId, timer }))
+      .catch(() => { if (!controller.signal.aborted) setResult({ id: timerId, error: "Timer konnte nicht geladen werden" }); });
+    return () => controller.abort();
   }, [open, timerId]);
 
   return (
@@ -69,6 +70,7 @@ export function TimerSessionsDialog({ timerId, open, onOpenChange }: TimerSessio
           </DialogTitle>
         </DialogHeader>
         {loading && <p className="text-sm text-muted-foreground">Laden...</p>}
+        {result?.id === timerId && result?.error && <p role="alert">{result.error}</p>}
         {timer && (
           <div className="space-y-4">
             <div className="rounded-lg bg-muted/50 p-3 text-sm">

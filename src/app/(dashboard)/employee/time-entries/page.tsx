@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { FilterPanel, PageSection } from "@/components/layout/device-layout";
 import { TimeEntryForm } from "@/components/forms/time-entry-form";
@@ -10,18 +10,9 @@ import { getTodayDateString, TimeEntryDateFilters } from "@/components/time-entr
 export default function EmployeeTimeEntriesPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [filters, setFilters] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    setFilters((prev) => {
-      const next = { ...prev };
-      if (dateFrom) next.dateFrom = dateFrom;
-      else delete next.dateFrom;
-      if (dateTo) next.dateTo = dateTo;
-      else delete next.dateTo;
-      return next;
-    });
-  }, [dateFrom, dateTo]);
+  const filters = useMemo<Record<string, string>>(() => ({
+    ...(dateFrom ? { dateFrom } : {}), ...(dateTo ? { dateTo } : {}),
+  }), [dateFrom, dateTo]);
 
   function handleToday() {
     const today = getTodayDateString();

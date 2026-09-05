@@ -9,7 +9,7 @@ export async function GET() {
   if ("error" in authResult) return authResult.error;
 
   const users = await prisma.user.findMany({
-    where: { role: "EMPLOYEE" },
+    where: { role: "EMPLOYEE", companyId: authResult.user.companyId },
     select: {
       id: true,
       name: true,
@@ -53,6 +53,8 @@ export async function POST(request: NextRequest) {
       email: parsed.data.email.toLowerCase(),
       password: hashedPassword,
       role: "EMPLOYEE",
+      companyId: authResult.user.companyId,
+      mustChangePassword: true,
       status: parsed.data.status,
     },
     select: {
