@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Plus, Pencil } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { PageSection } from "@/components/layout/device-layout";
 import { Button } from "@/components/ui/button";
@@ -49,6 +49,23 @@ export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [open, setOpen] = useState(false);
   const [editEmployee, setEditEmployee] = useState<Employee | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState("");
+
+  async function deleteEmployee(employee: Employee) {
+    if (!window.confirm(`${employee.name} (${employee.email}) endgültig löschen? Alle zugehörigen Zeiteinträge, Timer und Benachrichtigungen werden ebenfalls gelöscht. Dies kann nicht rückgängig gemacht werden. Zum Erhalten der Daten stattdessen den Status auf Inaktiv setzen.`)) return;
+    setDeletingId(employee.id);
+    setDeleteError("");
+    try {
+      const res = await fetch(`/api/users/${employee.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Mitarbeiter konnte nicht gelöscht werden. Bitte erneut versuchen.");
+      setEmployees(current => current.filter(item => item.id !== employee.id));
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : "Verbindungsfehler");
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   const {
     register,
@@ -167,6 +184,7 @@ export default function EmployeesPage() {
         }
       />
 
+      {deleteError && <p role="alert" className="text-destructive">{deleteError}</p>}
       <div className="space-y-3 md:hidden">
         {employees.map((employee) => (
           <DataListCard key={employee.id}>
@@ -174,6 +192,9 @@ export default function EmployeesPage() {
             <DataListRow label="E-Mail" value={<span className="break-all">{employee.email}</span>} />
             <DataListRow label="Erstellt" value={formatDateDE(employee.createdAt)} />
             <DataListActions>
+              <Button size="icon" variant="outline" disabled={deletingId !== null} onClick={() => deleteEmployee(employee)} aria-label={`${employee.name} endgültig löschen`}>
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
               <Button size="icon" variant="outline" onClick={() => setEditEmployee(employee)} aria-label="Bearbeiten">
                 <Pencil className="h-4 w-4" />
               </Button>
@@ -200,6 +221,9 @@ export default function EmployeesPage() {
                   <TableCell>{employee.email}</TableCell>
                   <TableCell>{formatDateDE(employee.createdAt)}</TableCell>
                   <TableCell className="text-right">
+                    <Button size="icon" variant="ghost" disabled={deletingId !== null} onClick={() => deleteEmployee(employee)} aria-label={`${employee.name} endgültig löschen`}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
                     <Button size="icon" variant="ghost" onClick={() => setEditEmployee(employee)}>
                       <Pencil className="h-4 w-4" />
                     </Button>

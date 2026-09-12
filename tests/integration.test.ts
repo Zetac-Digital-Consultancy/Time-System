@@ -96,6 +96,23 @@ test("real HTTP auth, tenant isolation, account lifecycle and timers", { timeout
     const otp = createTotp(mfaKey).generate();
     const platform = await login("platform@test.invalid", otp);
 
+    await t.test("employee deletion is permanent and tenant scoped", async () => {
+      await db.query("INSERT INTO users(id,name,email,password,role,company_id) VALUES ('delete-me','Delete Me','delete@test.invalid',$1,'EMPLOYEE','a')", [hash]);
+      const deletedSession = await login("delete@test.invalid");
+      await db.exec("INSERT INTO time_entries(id,user_id,work_date,start_time,end_time,total_hours) VALUES ('delete-entry','delete-me','2026-09-05','08:00','09:00',1); INSERT INTO work_timers(id,user_id,work_date,status,updated_at) VALUES ('delete-timer','delete-me','2026-09-05','RUNNING',now()); INSERT INTO notifications(id,user_id,title,message) VALUES ('delete-note','delete-me','Test','Test');");
+      assert.equal((await request(employee, '/api/users/delete-me', 'DELETE')).status, 403);
+      for (const id of ['be', 'aa', 'platform', 'missing']) {
+        assert.equal((await request(admin, `/api/users/${id}`, 'DELETE')).status, 404);
+      }
+      assert.equal((await request(admin, '/api/users/delete-me', 'DELETE')).status, 204);
+      for (const [table, column] of [['users', 'id'], ['time_entries', 'user_id'], ['work_timers', 'user_id'], ['notifications', 'user_id']]) {
+        assert.equal((await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM ${table} WHERE ${column}='delete-me'`)).rows[0].n, 0);
+      }
+      assert.equal((await db.query<{ n: number }>("SELECT count(*)::int AS n FROM audit_logs WHERE entity_id='delete-me' AND action='DELETE' AND admin_id='aa'")).rows[0].n, 1);
+      assert.equal((await request(deletedSession, '/api/time-entries')).status, 401);
+      assert.equal((await request(admin, '/api/users/delete-me', 'DELETE')).status, 404);
+    });
+
     await t.test("company lists, dashboards and exports never disclose company B", async () => {
       for (const path of ["/api/users", "/api/baustellen", "/api/time-entries", "/api/work-timers", "/api/audit-logs", "/api/dashboard/admin"]) {
         const res = await request(admin, path);

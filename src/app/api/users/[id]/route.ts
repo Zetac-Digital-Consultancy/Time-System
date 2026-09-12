@@ -6,6 +6,25 @@ import bcrypt from "bcryptjs";
 
 type RouteParams = { params: Promise<{ id: string }> };
 
+export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+  const authResult = await requireAdmin();
+  if ("error" in authResult) return authResult.error;
+  const { id } = await params;
+  const deleted = await prisma.$transaction(async (tx) => {
+    const result = await tx.user.deleteMany({
+      where: { id, companyId: authResult.user.companyId, role: "EMPLOYEE" },
+    });
+    if (!result.count) return false;
+    await tx.auditLog.create({ data: {
+      adminId: authResult.user.id, action: "DELETE", entityType: "User", entityId: id,
+      details: "Mitarbeiterkonto einschließlich Zeiteinträgen, Timern, Benachrichtigungen und Zugangstokens dauerhaft gelöscht",
+    } });
+    return true;
+  });
+  if (!deleted) return NextResponse.json({ error: "Mitarbeiter nicht gefunden" }, { status: 404 });
+  return new NextResponse(null, { status: 204 });
+}
+
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   const authResult = await requireAdmin();
   if ("error" in authResult) return authResult.error;
